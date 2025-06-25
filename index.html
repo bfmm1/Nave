@@ -51,7 +51,6 @@
         .action-btn-text { font-size: 0.8em; }
         .action-btn-count { font-size: 1.2em; }
         #special-btn { background-color: rgba(80, 80, 255, 0.5); }
-        /* ALTERADO: CSS do Joystick removido */
         .hidden { display: none !important; }
         #stage-select-overlay, #upgrade-store-overlay, #pause-menu-overlay, #game-over-screen {
              background-color: rgba(0, 0, 0, 0.85);
@@ -69,7 +68,6 @@
         <div id="pause-menu-overlay" class="overlay hidden"><h2>Pausado</h2><div id="pause-menu-buttons"><button id="continue-btn" class="button">Continuar</button><button id="pause-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
         <div id="game-over-screen" class="overlay hidden"><h1>Fim de Jogo</h1><p>Sua pontuação: <span id="final-score">0</span></p><div id="game-over-buttons"><button id="restart-btn" class="button">Jogar Novamente</button><button id="game-over-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
         <div id="game-ui" class="hidden"><div id="ui-top-row"><span id="score">Pontos: 0</span><span id="wave">Onda: 1</span></div><div id="ui-bottom-row"><div id="player-health-display"><span>♥</span><span id="health-text">10/10</span></div><div id="player-special-display"><span>💣</span><span id="special-text">1</span></div></div></div>
-        <!-- ALTERADO: HTML do Joystick removido -->
         <div id="virtual-controls"><div id="action-buttons" class="hidden"><button id="special-btn" class="action-btn"><span class="action-btn-text">Especial</span><span id="special-count-btn" class="action-btn-count">1</span></button></div></div>
     </div>
 <script>
@@ -79,11 +77,11 @@ window.onload = function() {
     // ----------------------------------------------------------------------------------
     const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
     const gameContainer = document.getElementById('game-container');
-    // ALTERADO: Referências ao Joystick removidas do objeto UI
     const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-    const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5 };
+    // ALTERADO: Adicionado constantes para o novo controle de toque
+    const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5, TOUCH_OFFSET_Y: 80, PLAYER_TOUCH_LERP_FACTOR: 0.25 };
     const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png', drone: 'drone.png', missel: 'missel.png' };
     const assets = {};
     
@@ -104,8 +102,11 @@ window.onload = function() {
     let backgroundY = 0;
     let bossActive = false;
     const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false };
-    // ALTERADO: Variável do joystick trocada pela de controle de toque direto
+    // ALTERADO: Variáveis para o novo controle de toque
     let controllingTouchId = null;
+    let touchTargetX = null;
+    let touchTargetY = null;
+    let isTouchMoving = false;
     
     // --- FUNÇÕES DE DADOS, UI E NAVEGAÇÃO ---
     function loadAssets() { const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => { return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; }); }); return Promise.all(promises); }
@@ -129,6 +130,9 @@ window.onload = function() {
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
         player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
+        // ALTERADO: Inicializa a posição alvo do toque para a posição inicial do jogador
+        touchTargetX = player.x + player.width / 2;
+        touchTargetY = player.y + player.height / 2;
         const droneSize = 20;
         if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, width: droneSize, height: droneSize, side: 'left', lastShotTime: 0 });
         if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, width: droneSize, height: droneSize, side: 'right', lastShotTime: 0 });
@@ -143,17 +147,25 @@ window.onload = function() {
     function endGameAndGoToMenu(e) { if(isMobile && e) e.preventDefault(); gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
+    // ALTERADO: Lógica de movimento totalmente refeita para usar interpolação suave no mobile
     function updatePlayer(now) {
         if (player.isHit && now - player.lastHitTime > 300) player.isHit = false;
-        // ALTERADO: Movimento no celular é agora controlado pelos eventos de toque direto.
-        if (!isMobile) {
+
+        if (isMobile && isTouchMoving) {
+            // Move suavemente em direção ao ponto de toque
+            player.x += (touchTargetX - player.x) * CONFIG.PLAYER_TOUCH_LERP_FACTOR;
+            player.y += (touchTargetY - player.y) * CONFIG.PLAYER_TOUCH_LERP_FACTOR;
+        } else if (!isMobile) {
+            // Mantém o controle do teclado para desktop
             if (keys.w) player.y -= player.speed;
             if (keys.s) player.y += player.speed;
             if (keys.a) player.x -= player.speed;
             if (keys.d) player.x += player.speed;
-            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
         }
+
+        // Garante que a nave não saia dos limites
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
         
         const shootTrigger = isMobile || keys.j || mouse.down;
         if (shootTrigger && now - player.lastShotTime > player.fireRate) {
@@ -168,11 +180,10 @@ window.onload = function() {
         }
     }
     
-    // ALTERADO: Dificuldade inicial rebalanceada
     function spawnEnemies() {
         const enemyCount = 3 + Math.floor(wave * 1.5);
         for (let i = 0; i < enemyCount; i++) {
-            const health = 2 + Math.floor(wave * 0.7); // Vida escala mais lentamente no início
+            const health = 2 + Math.floor(wave * 0.7);
             const patterns = ['single', 'spread'];
             if (wave > 5) patterns.push('homing');
             const pattern = patterns[Math.floor(Math.random() * patterns.length)];
@@ -181,10 +192,10 @@ window.onload = function() {
                 y: -50 - (i * 60), 
                 width: CONFIG.ENEMY_SIZE, height: CONFIG.ENEMY_SIZE, 
                 health: health, maxHealth: health, 
-                vy: 1 + Math.random() * 0.5 + (wave > 2 ? (wave * 0.05) : 0), // Velocidade só aumenta após a onda 2
+                vy: 1 + Math.random() * 0.5 + (wave > 2 ? (wave * 0.05) : 0),
                 vx: (Math.random() - 0.5) * 2, 
                 shootPattern: pattern, 
-                shootCooldown: Math.max(500, 2800 - (wave > 3 ? (wave * 50) : 0)), // Cadência só aumenta após a onda 3
+                shootCooldown: Math.max(500, 2800 - (wave > 3 ? (wave * 50) : 0)),
                 lastShotTime: Date.now()
             });
         }
@@ -427,23 +438,16 @@ window.onload = function() {
     document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
     document.addEventListener('mouseleave', () => mouse.down = false);
     
-    // ALTERADO: Lógica de controle de toque direto
+    // ALTERADO: Lógica de controle refeita para toque direto e suave
     if (isMobile) {
-        let controllingTouchId = null;
         const specialBtn = document.getElementById('special-btn');
 
-        function updatePlayerPosition(touch) {
+        function setTouchTarget(touch) {
             if (!player) return;
             const rect = canvas.getBoundingClientRect();
-            const canvasX = touch.clientX - rect.left;
-            const canvasY = touch.clientY - rect.top;
-            
-            player.x = canvasX - player.width / 2;
-            player.y = canvasY - player.height / 2;
-            
-            // Garante que a nave não saia da tela
-            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            // Mapeia as coordenadas do toque para as coordenadas do canvas
+            touchTargetX = (touch.clientX - rect.left) / rect.width * canvas.width - player.width / 2;
+            touchTargetY = (touch.clientY - rect.top) / rect.height * canvas.height - player.height / 2 - CONFIG.TOUCH_OFFSET_Y;
         }
 
         specialBtn.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = true; }, { passive: false });
@@ -454,7 +458,8 @@ window.onload = function() {
             if (controllingTouchId === null) {
                 const touch = e.changedTouches[0];
                 controllingTouchId = touch.identifier;
-                updatePlayerPosition(touch);
+                isTouchMoving = true;
+                setTouchTarget(touch);
             }
         }, { passive: false });
 
@@ -463,7 +468,7 @@ window.onload = function() {
             if (controllingTouchId !== null) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === controllingTouchId) {
-                        updatePlayerPosition(e.changedTouches[i]);
+                        setTouchTarget(e.changedTouches[i]);
                         break;
                     }
                 }
@@ -475,6 +480,7 @@ window.onload = function() {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === controllingTouchId) {
                         controllingTouchId = null;
+                        isTouchMoving = false;
                         break;
                     }
                 }
