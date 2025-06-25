@@ -78,7 +78,7 @@ window.onload = function() {
     // --- SETUP, CONFIGURAÇÕES E ASSETS ---
     // ----------------------------------------------------------------------------------
     const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.querySelector('#virtual-controls #joystick-base'), joystickStick: document.querySelector('#virtual-controls #joystick-stick'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
+    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.querySelector('#virtual-controls #joystick-base'), joystickStick: document.querySelector('#virtual-controls #joystick-stick'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text'), shootBtn: document.getElementById('shoot-btn') };
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5 };
@@ -87,12 +87,11 @@ window.onload = function() {
     
     // --- ESTADO GLOBAL (PERSISTENTE) ---
     let playerCurrency = 0, playerUpgrades = {};
-    // ALTERADO: Custos e níveis das melhorias foram rebalanceados para uma progressão mais lenta.
     const upgradeConfig = {
         maxHealth: { name: 'Vida Máxima', baseCost: 2500, maxLevel: 10 },
         damage: { name: 'Dano da Arma', baseCost: 3500, maxLevel: 10 },
         fireRate: { name: 'Cadência de Tiro', baseCost: 4000, maxLevel: 8 },
-        shotCount: { name: 'Tiro Extra', baseCost: 8000, maxLevel: 5 }, // Agora vai até 5 tiros
+        shotCount: { name: 'Tiro Extra', baseCost: 8000, maxLevel: 5 }, 
         drones: { name: 'Drones de Ataque', baseCost: 15000, maxLevel: 2 },
         shield: { name: 'Escudo Regenerativo', baseCost: 10000, maxLevel: 1 },
         specialCount: { name: 'Especiais Extras', baseCost: 6000, maxLevel: 5 }
@@ -125,7 +124,6 @@ window.onload = function() {
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
-        // ALTERADO: Atributos do jogador rebalanceados (cadência, contagem de tiros)
         player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
         const droneSize = 20;
         if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, width: droneSize, height: droneSize, side: 'left', lastShotTime: 0 });
@@ -139,9 +137,26 @@ window.onload = function() {
     function endGameAndGoToMenu() { gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
-    function updatePlayer(now) { if (player.isHit && now - player.lastHitTime > 300) player.isHit = false; if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; } player.x = Math.max(0, Math.min(canvas.width - player.width, player.x)); player.y = Math.max(0, Math.min(canvas.height - player.height, player.y)); if ((keys.j || mouse.down) && now - player.lastShotTime > player.fireRate) { fireProjectiles(); player.lastShotTime = now; } if (keys.f && player.specialAmmo > 0 && now - player.lastSpecialTime > 1000) { fireSuperWeapon(); player.specialAmmo--; player.lastSpecialTime = now; } }
+    // ALTERADO: Lógica de tiro agora é automática em dispositivos móveis
+    function updatePlayer(now) {
+        if (player.isHit && now - player.lastHitTime > 300) player.isHit = false;
+        if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; }
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        
+        const shootTrigger = isMobile || keys.j || mouse.down;
+        if (shootTrigger && now - player.lastShotTime > player.fireRate) {
+            fireProjectiles();
+            player.lastShotTime = now;
+        }
+        
+        if (keys.f && player.specialAmmo > 0 && now - player.lastSpecialTime > 1000) {
+            fireSuperWeapon();
+            player.specialAmmo--;
+            player.lastSpecialTime = now;
+        }
+    }
     
-    // ALTERADO: Inimigos agora são mais fortes e têm movimento horizontal
     function spawnEnemies() {
         const enemyCount = 3 + Math.floor(wave * 1.5);
         for (let i = 0; i < enemyCount; i++) {
@@ -149,24 +164,11 @@ window.onload = function() {
             const patterns = ['single', 'spread'];
             if (wave > 5) patterns.push('homing');
             const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-            enemies.push({
-                x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE),
-                y: -50 - (i * 60),
-                width: CONFIG.ENEMY_SIZE,
-                height: CONFIG.ENEMY_SIZE,
-                health: health,
-                maxHealth: health,
-                vy: 1 + Math.random() * 0.5 + (wave * 0.05), // Mais rápido com as ondas
-                vx: (Math.random() - 0.5) * 2, // Movimento horizontal
-                shootPattern: pattern,
-                shootCooldown: Math.max(500, 2500 - wave * 50), // Atiram mais rápido com as ondas
-                lastShotTime: Date.now()
-            });
+            enemies.push({ x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE), y: -50 - (i * 60), width: CONFIG.ENEMY_SIZE, height: CONFIG.ENEMY_SIZE, health: health, maxHealth: health, vy: 1 + Math.random() * 0.5 + (wave * 0.05), vx: (Math.random() - 0.5) * 2, shootPattern: pattern, shootCooldown: Math.max(500, 2500 - wave * 50), lastShotTime: Date.now() });
         }
     }
     const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 3 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 2.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 2.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
     
-    // ALTERADO: Boss com mais vida e novos ataques
     function spawnBoss() {
         const weaponSize = CONFIG.BOSS_WEAPON_SIZE;
         const parts = [ { id: 'weapon1', x: 25, y: 70, width: weaponSize, height: weaponSize }, { id: 'weapon2', x: CONFIG.BOSS_WIDTH - weaponSize - 25, y: 70, width: weaponSize, height: weaponSize } ];
@@ -174,8 +176,11 @@ window.onload = function() {
             x: canvas.width / 2 - CONFIG.BOSS_WIDTH / 2, y: -CONFIG.BOSS_HEIGHT, width: CONFIG.BOSS_WIDTH, height: CONFIG.BOSS_HEIGHT,
             health: 300 + (bossCount * 150), maxHealth: 300 + (bossCount * 150),
             vy: 0.5, vx: 1.5, patrolRange: [20, canvas.width - CONFIG.BOSS_WIDTH - 20],
-            targetY: 50, phase: 1, shotAngle: 0, shotAngleIncrement: 0.05, // Para o ataque espiral
-            lastShotTime: Date.now(), lastSpiralShotTime: Date.now(),
+            targetY: 50, phase: 1, shotAngle: 0, lastShotTime: Date.now(), lastSpiralShotTime: Date.now(),
+            shotAngleIncrement: 0.1,
+            spiralWaveCount: 0,
+            SPIRAL_WAVE_LENGTH: 12,
+            SPIRAL_GAP_LENGTH: 8,
             parts: []
         };
         parts.forEach(p => {
@@ -183,30 +188,23 @@ window.onload = function() {
         });
     }
 
-    // ALTERADO: Lógica de ataque e movimento do Boss totalmente refeita
     function updateBoss(now) {
         if (!boss) return;
         
-        // Movimento
         if (boss.y < boss.targetY) {
             boss.y += boss.vy;
         } else {
-            // Movimento vertical sutil (senoide)
             boss.y = boss.targetY + Math.sin(now / 1500) * 20;
-            // Patrulha horizontal
             boss.x += boss.vx;
             if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) {
                 boss.vx *= -1;
             }
         }
         
-        // Transição de fases
         if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; }
         if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; }
 
-        // Lógica de ataque por fase
         if (boss.phase === 1) {
-            // Fase 1: Atira com as armas
             boss.parts.forEach(part => {
                 if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) {
                     part.lastShotTime = now;
@@ -215,19 +213,25 @@ window.onload = function() {
                 }
             });
         } else {
-            // Fases 2 e 3: Ataque em espiral
-            const spiralCooldown = (boss.phase === 3) ? 50 : 80; // Espiral mais rápido na fase 3
+            const spiralCooldown = (boss.phase === 3) ? 40 : 60;
             if (now - boss.lastSpiralShotTime > spiralCooldown) {
                 boss.lastSpiralShotTime = now;
                 boss.shotAngle += boss.shotAngleIncrement;
-                const numSpiralShots = 2; // Dispara de pontos opostos para criar o túnel
-                for (let i = 0; i < numSpiralShots; i++) {
-                    const angle = boss.shotAngle + (i * Math.PI * (2 / numSpiralShots));
-                    enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
+
+                if (boss.spiralWaveCount < boss.SPIRAL_WAVE_LENGTH) {
+                    const numSpiralShots = 2;
+                    for (let i = 0; i < numSpiralShots; i++) {
+                        const angle = boss.shotAngle + (i * Math.PI * (2 / numSpiralShots));
+                        enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
+                    }
+                }
+                
+                boss.spiralWaveCount++;
+                if (boss.spiralWaveCount >= boss.SPIRAL_WAVE_LENGTH + boss.SPIRAL_GAP_LENGTH) {
+                    boss.spiralWaveCount = 0;
                 }
             }
             
-            // Fase 3: Adiciona tiros teleguiados
             const homingCooldown = 1200 - (bossCount * 100);
             if (boss.phase === 3 && now - boss.lastShotTime > homingCooldown) {
                 boss.lastShotTime = now;
@@ -239,7 +243,6 @@ window.onload = function() {
         }
     }
 
-    // ALTERADO: Lógica de tiros do jogador para suportar de 1 a 5 tiros
     function fireProjectiles() {
         const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y, d = player.damage;
         const p = { s, damage: d, health: 1 };
@@ -281,11 +284,10 @@ window.onload = function() {
         powerups.forEach((p, i) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(i, 1); });
         damageNumbers.forEach((dn, i) => { dn.y += dn.vy; dn.life--; if (dn.life <= 0) damageNumbers.splice(i, 1); });
         
-        // ALTERADO: Cadência de tiro do drone diminuída
         drones.forEach(d => {
             const targetX = player.x + (d.side === 'left' ? -40 : player.width + 10);
             d.x += (targetX - d.x) * 0.1; d.y += (player.y - d.y) * 0.1;
-            if(now - d.lastShotTime > player.fireRate * 3.3 && (enemies.length > 0 || bossActive)) { // Multiplicador aumentado para tiro mais lento
+            if(now - d.lastShotTime > player.fireRate * 3.3 && (enemies.length > 0 || bossActive)) {
                 let closest = null, minDist = Infinity;
                 const targets = [...enemies, ...(boss ? [boss, ...boss.parts.filter(part => !part.destroyed)] : [])];
                 targets.forEach(e => {
@@ -314,7 +316,6 @@ window.onload = function() {
             enemies.forEach((enemy, index) => {
                 enemy.y += enemy.vy;
                 enemy.x += enemy.vx;
-                // NOVO: Faz o inimigo ricochetear nas bordas
                 if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
                     enemy.vx *= -1;
                 }
@@ -347,7 +348,7 @@ window.onload = function() {
         setShadow(); ctx.globalAlpha = player.isHit ? 0.5 : 1.0; ctx.drawImage(assets.player, player.x, player.y, player.width, player.height); resetShadow(); ctx.globalAlpha = 1.0;
         if (player.hasShield && player.shieldActive) { ctx.beginPath(); ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2 + 10, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(0, 191, 255, 0.7)'; ctx.lineWidth = 3; ctx.stroke(); }
         
-        const projectileColors = ['#FFFFFF', '#00FF00', '#00FFFF', '#FFFF00', '#FF00FF', '#FF69B4']; ctx.fillStyle = projectileColors[player.shotCount] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+        const projectileColors = ['#FFFFFF', '#00FF00', '#00FFFF', '#FFFF00', '#FF00FF', '#FF69B4']; ctx.fillStyle = projectileColors[player.shotCount - 1] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
         
         enemies.forEach(e => { const hp = e.health / e.maxHealth; ctx.fillStyle = '#f00'; ctx.fillRect(e.x, e.y - 10, e.width, 5); ctx.fillStyle = '#0f0'; ctx.fillRect(e.x, e.y - 10, e.width * hp, 5); setShadow(); ctx.drawImage(assets.enemy1, e.x, e.y, e.width, e.height); resetShadow(); });
         ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
@@ -400,9 +401,11 @@ window.onload = function() {
     document.addEventListener('mousedown', (e) => { if (e.target === canvas && e.button === 0) mouse.down = true; });
     document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
     document.addEventListener('mouseleave', () => mouse.down = false);
+    
+    // ALTERADO: Botão de tiro é escondido e seus listeners removidos em dispositivos móveis
     if (isMobile) {
-        document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); mouse.down = true; }, { passive: false });
-        document.getElementById('shoot-btn').addEventListener('touchend', (e) => { e.preventDefault(); mouse.down = false; });
+        ui.shootBtn.style.display = 'none';
+
         document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; }, { passive: false });
         document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
         document.addEventListener('touchstart', (e) => { const touch = e.touches[0]; if (touch.clientX < window.innerWidth / 2) { e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY; ui.joystickBase.style.left = `${joystick.x}px`; ui.joystickBase.style.top = `${joystick.y}px`; ui.joystickStick.style.left = `${joystick.x}px`; ui.joystickStick.style.top = `${joystick.y}px`; ui.joystickBase.classList.remove('hidden'); ui.joystickStick.classList.remove('hidden'); } }, { passive: false });
