@@ -80,7 +80,6 @@ window.onload = function() {
     const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-    // ALTERADO: Adicionado constantes para o novo controle de toque
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5, TOUCH_OFFSET_Y: 80, PLAYER_TOUCH_LERP_FACTOR: 0.25 };
     const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png', drone: 'drone.png', missel: 'missel.png' };
     const assets = {};
@@ -102,7 +101,6 @@ window.onload = function() {
     let backgroundY = 0;
     let bossActive = false;
     const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false };
-    // ALTERADO: Variáveis para o novo controle de toque
     let controllingTouchId = null;
     let touchTargetX = null;
     let touchTargetY = null;
@@ -130,7 +128,6 @@ window.onload = function() {
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
         player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
-        // ALTERADO: Inicializa a posição alvo do toque para a posição inicial do jogador
         touchTargetX = player.x + player.width / 2;
         touchTargetY = player.y + player.height / 2;
         const droneSize = 20;
@@ -147,23 +144,21 @@ window.onload = function() {
     function endGameAndGoToMenu(e) { if(isMobile && e) e.preventDefault(); gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
-    // ALTERADO: Lógica de movimento totalmente refeita para usar interpolação suave no mobile
     function updatePlayer(now) {
         if (player.isHit && now - player.lastHitTime > 300) player.isHit = false;
 
         if (isMobile && isTouchMoving) {
-            // Move suavemente em direção ao ponto de toque
-            player.x += (touchTargetX - player.x) * CONFIG.PLAYER_TOUCH_LERP_FACTOR;
-            player.y += (touchTargetY - player.y) * CONFIG.PLAYER_TOUCH_LERP_FACTOR;
+            const targetX = touchTargetX - player.width / 2;
+            const targetY = touchTargetY - player.height / 2;
+            player.x += (targetX - player.x) * CONFIG.PLAYER_TOUCH_LERP_FACTOR;
+            player.y += (targetY - player.y) * CONFIG.PLAYER_TOUCH_LERP_FACTOR;
         } else if (!isMobile) {
-            // Mantém o controle do teclado para desktop
             if (keys.w) player.y -= player.speed;
             if (keys.s) player.y += player.speed;
             if (keys.a) player.x -= player.speed;
             if (keys.d) player.x += player.speed;
         }
 
-        // Garante que a nave não saia dos limites
         player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
         player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
         
@@ -292,6 +287,7 @@ window.onload = function() {
     function spawnPowerup(x, y) { const dropPowerup = (type, px, py) => powerups.push({ x: px, y: py, width: 30, height: 30, type, speed: 2 }); let dropped = 0; const dropX = x - 15; if (Math.random() <= 0.05) { dropPowerup('shotSpeed', dropX + (dropped * 35), y); dropped++; } if (Math.random() <= 0.05) { dropPowerup('health', dropX + (dropped * 35), y); } }
     function applyPowerup(type) { if (type === 'shotSpeed') player.projectileSpeed = Math.min(14, player.projectileSpeed + 0.5); if (type === 'health') player.health = Math.min(player.maxHealth, player.health + 1); }
 
+    // ALTERADO: Lógica de colisão do jogador agora usa hitboxes menores e invisíveis.
     function checkCollisions() {
         for (let i = projectiles.length - 1; i >= 0; i--) {
             const p = projectiles[i]; let hit = false;
@@ -307,7 +303,42 @@ window.onload = function() {
         }
         for (let i = homingMissiles.length - 1; i >= 0; i--) { const m = homingMissiles[i]; let hit = false; for (let j = enemies.length - 1; j >= 0; j--) { const e = enemies[j]; if (isColliding(m, e)) { e.health -= m.damage; spawnDamageNumber(m.damage, e.x, e.y, '#87CEEB'); if (e.health <= 0) { playerCurrency += 100 + wave * 5; score += 100 + wave * 5; enemies.splice(j, 1); } homingMissiles.splice(i, 1); hit = true; break; } } if (hit) continue; }
         for (let i = powerups.length - 1; i >= 0; i--) { if (isColliding(player, powerups[i])) { applyPowerup(powerups[i].type); powerups.splice(i, 1); } }
-        if (!player.isHit) { const hitables = [...enemyProjectiles, ...enemies]; if (bossActive && boss) { hitables.push(boss); boss.parts.forEach(p => { if (!p.destroyed) hitables.push({ ...p, x: boss.x + p.x, y: boss.y + p.y }); }); } for (let i = hitables.length - 1; i >= 0; i--) { if (isColliding(hitables[i], player)) { handlePlayerHit(); const h = hitables[i]; if (h.maxHealth !== undefined) { const index = enemies.indexOf(h); if (index > -1) enemies.splice(index, 1); } else { const index = enemyProjectiles.indexOf(h); if (index > -1) enemyProjectiles.splice(index, 1); } if (gameOver) return; break; } } }
+        
+        if (!player.isHit) {
+            // Checa colisão com projéteis inimigos (hitbox 70%)
+            const playerHitboxProj = { width: player.width * 0.7, height: player.height * 0.7 };
+            playerHitboxProj.x = player.x + (player.width - playerHitboxProj.width) / 2;
+            playerHitboxProj.y = player.y + (player.height - playerHitboxProj.height) / 2;
+            for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+                if (isColliding(enemyProjectiles[i], playerHitboxProj)) {
+                    handlePlayerHit();
+                    enemyProjectiles.splice(i, 1);
+                    if (gameOver) return;
+                    break;
+                }
+            }
+            if (player.isHit) return;
+
+            // Checa colisão com naves inimigas (hitbox 80%)
+            const playerHitboxEnemy = { width: player.width * 0.8, height: player.height * 0.8 };
+            playerHitboxEnemy.x = player.x + (player.width - playerHitboxEnemy.width) / 2;
+            playerHitboxEnemy.y = player.y + (player.height - playerHitboxEnemy.height) / 2;
+            const physicalObjects = [...enemies];
+            if (bossActive && boss) {
+                physicalObjects.push(boss);
+                boss.parts.forEach(p => { if (!p.destroyed) physicalObjects.push({ ...p, x: boss.x + p.x, y: boss.y + p.y }); });
+            }
+            for (let i = physicalObjects.length - 1; i >= 0; i--) {
+                if (isColliding(physicalObjects[i], playerHitboxEnemy)) {
+                    handlePlayerHit();
+                    if (physicalObjects[i].maxHealth) { // Se for um inimigo/boss, não o projétil
+                         const index = enemies.indexOf(physicalObjects[i]); if (index > -1) enemies.splice(index, 1);
+                    }
+                    if (gameOver) return;
+                    break;
+                }
+            }
+        }
     }
     
     function updateEntities(now) {
@@ -438,22 +469,22 @@ window.onload = function() {
     document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
     document.addEventListener('mouseleave', () => mouse.down = false);
     
-    // ALTERADO: Lógica de controle refeita para toque direto e suave
     if (isMobile) {
         const specialBtn = document.getElementById('special-btn');
 
         function setTouchTarget(touch) {
             if (!player) return;
             const rect = canvas.getBoundingClientRect();
-            // Mapeia as coordenadas do toque para as coordenadas do canvas
-            touchTargetX = (touch.clientX - rect.left) / rect.width * canvas.width - player.width / 2;
-            touchTargetY = (touch.clientY - rect.top) / rect.height * canvas.height - player.height / 2 - CONFIG.TOUCH_OFFSET_Y;
+            touchTargetX = (touch.clientX - rect.left) / rect.width * canvas.width;
+            touchTargetY = (touch.clientY - rect.top) / rect.height * canvas.height - CONFIG.TOUCH_OFFSET_Y;
         }
 
         specialBtn.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = true; }, { passive: false });
         specialBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = false; });
         
+        // ALTERADO: Listener de toque agora só previne o default se o jogo estiver rodando.
         gameContainer.addEventListener('touchstart', (e) => {
+            if (!gameStarted || isPaused) return; // Permite scroll em menus
             e.preventDefault();
             if (controllingTouchId === null) {
                 const touch = e.changedTouches[0];
@@ -464,6 +495,7 @@ window.onload = function() {
         }, { passive: false });
 
         gameContainer.addEventListener('touchmove', (e) => {
+            if (!gameStarted || isPaused) return; // Permite scroll em menus
             e.preventDefault();
             if (controllingTouchId !== null) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
