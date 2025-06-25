@@ -16,8 +16,8 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            justify-content: flex-end; /* Alinha na parte de baixo */
-            align-items: flex-start;   /* Alinha na esquerda */
+            justify-content: flex-end;
+            align-items: flex-start;
             padding-left: 40px;
             padding-bottom: 80px;
         }
@@ -76,35 +76,35 @@
 window.onload = function() {
     // ----------------------------------------------------------------------------------
     // --- SETUP, CONFIGURAÇÕES E ASSETS ---
-    // Esta seção prepara o jogo, define constantes e carrega as imagens.
-    // Para alterar a velocidade do fundo ou o tamanho dos sprites, edite CONFIG.
     // ----------------------------------------------------------------------------------
     const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
     const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.querySelector('#virtual-controls #joystick-base'), joystickStick: document.querySelector('#virtual-controls #joystick-stick'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5 };
-    // ALTERADO: Adicionado 'drone.png' e 'missel.png' para pré-carregamento
     const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png', drone: 'drone.png', missel: 'missel.png' };
     const assets = {};
     
     // --- ESTADO GLOBAL (PERSISTENTE) ---
-    // Variáveis salvas no navegador (pontos para gastar, upgrades comprados).
-    // ----------------------------------------------------------------------------------
     let playerCurrency = 0, playerUpgrades = {};
-    const upgradeConfig = { maxHealth: { name: 'Vida Máxima', baseCost: 1000, maxLevel: 10 }, damage: { name: 'Dano da Arma', baseCost: 1500, maxLevel: 10 }, fireRate: { name: 'Cadência de Tiro', baseCost: 2000, maxLevel: 8 }, shotCount: { name: 'Tiro Extra', baseCost: 4000, maxLevel: 3}, drones: { name: 'Drones de Ataque', baseCost: 7500, maxLevel: 2}, shield: { name: 'Escudo Regenerativo', baseCost: 5000, maxLevel: 1 }, specialCount: { name: 'Especiais Extras', baseCost: 3000, maxLevel: 5 } };
+    // ALTERADO: Custos e níveis das melhorias foram rebalanceados para uma progressão mais lenta.
+    const upgradeConfig = {
+        maxHealth: { name: 'Vida Máxima', baseCost: 2500, maxLevel: 10 },
+        damage: { name: 'Dano da Arma', baseCost: 3500, maxLevel: 10 },
+        fireRate: { name: 'Cadência de Tiro', baseCost: 4000, maxLevel: 8 },
+        shotCount: { name: 'Tiro Extra', baseCost: 8000, maxLevel: 5 }, // Agora vai até 5 tiros
+        drones: { name: 'Drones de Ataque', baseCost: 15000, maxLevel: 2 },
+        shield: { name: 'Escudo Regenerativo', baseCost: 10000, maxLevel: 1 },
+        specialCount: { name: 'Especiais Extras', baseCost: 6000, maxLevel: 5 }
+    };
 
     // --- ESTADO DA PARTIDA (RESETÁVEL) ---
-    // Variáveis que são zeradas a cada vez que o jogo começa.
-    // ----------------------------------------------------------------------------------
     let gameStarted, gameOver, isPaused, score, wave, player, projectiles, enemies, enemyProjectiles, powerups, boss, damageNumbers, bossCount, drones, homingMissiles, selectedStageIndex;
     let backgroundY = 0;
     let bossActive = false;
     const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
     
     // --- FUNÇÕES DE DADOS, UI E NAVEGAÇÃO ---
-    // Controlam o carregamento de dados, salvamento e a exibição dos menus.
-    // ----------------------------------------------------------------------------------
     function loadAssets() { const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => { return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; }); }); return Promise.all(promises); }
     function loadData() { playerCurrency = parseInt(localStorage.getItem('playerCurrency') || '0', 10); const savedUpgrades = JSON.parse(localStorage.getItem('playerUpgrades') || '{}'); playerUpgrades.maxUnlockedStage = parseInt(savedUpgrades.maxUnlockedStage || '1', 10); for (const key in upgradeConfig) { playerUpgrades[key] = savedUpgrades[key] || (key === 'shield' || key === 'drones' ? 0 : 1); } ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); }
     function saveData() { localStorage.setItem('playerCurrency', playerCurrency); localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades)); const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0'); if (score > highScore) localStorage.setItem('aeroFighterHighScore', score); }
@@ -113,8 +113,8 @@ window.onload = function() {
     function showMainMenu() { ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
     function showUpgradeStore() { populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
     function showStageSelect() { selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
-    function populateUpgradeStore() { ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener('click', buyUpgrade)); }
-    function buyUpgrade(e) { const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
+    function populateUpgradeStore() { ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level -1)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener('click', buyUpgrade)); }
+    function buyUpgrade(e) { const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level-1)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
     function updateStageSelectorDisplay() { const stageNum = selectedStageIndex + 1; const startWave = selectedStageIndex * 10 + 1; const endWave = startWave + 9; ui.stageDisplay.textContent = `Fase ${stageNum} (Ondas ${startWave}-${endWave})`; ui.prevStageBtn.disabled = selectedStageIndex === 0; ui.nextStageBtn.disabled = selectedStageIndex >= playerUpgrades.maxUnlockedStage - 1; }
     function updateUIDisplay() { ui.scoreDisplay.textContent = `Pontos: ${score.toLocaleString('pt-BR')}`; ui.waveDisplay.textContent = `Onda: ${wave}`; ui.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`; ui.specialText.textContent = player.specialAmmo; if (isMobile) ui.specialCountBtn.textContent = player.specialAmmo; }
     function spawnDamageNumber(amount, x, y, color = '#fff') { damageNumbers.push({ text: Math.round(amount), x: x + 20, y: y, life: 60, vy: -0.5, color }); }
@@ -125,8 +125,8 @@ window.onload = function() {
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
-        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 200 - (playerUpgrades.fireRate - 1) * 15, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 2 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
-        // ALTERADO: Adicionado width e height para o objeto drone
+        // ALTERADO: Atributos do jogador rebalanceados (cadência, contagem de tiros)
+        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
         const droneSize = 20;
         if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, width: droneSize, height: droneSize, side: 'left', lastShotTime: 0 });
         if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, width: droneSize, height: droneSize, side: 'right', lastShotTime: 0 });
@@ -140,13 +140,117 @@ window.onload = function() {
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
     function updatePlayer(now) { if (player.isHit && now - player.lastHitTime > 300) player.isHit = false; if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; } player.x = Math.max(0, Math.min(canvas.width - player.width, player.x)); player.y = Math.max(0, Math.min(canvas.height - player.height, player.y)); if ((keys.j || mouse.down) && now - player.lastShotTime > player.fireRate) { fireProjectiles(); player.lastShotTime = now; } if (keys.f && player.specialAmmo > 0 && now - player.lastSpecialTime > 1000) { fireSuperWeapon(); player.specialAmmo--; player.lastSpecialTime = now; } }
-    function spawnEnemies() { const enemyCount = 3 + Math.floor(wave * 1.5); for (let i = 0; i < enemyCount; i++) { const health = 1 + Math.floor(wave / 2); const patterns = ['single', 'spread']; if (wave > 5) patterns.push('homing'); const pattern = patterns[Math.floor(Math.random() * patterns.length)]; enemies.push({ x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE), y: -50 - (i * 60), width: CONFIG.ENEMY_SIZE, height: CONFIG.ENEMY_SIZE, health: health, maxHealth: health, vy: 1 + Math.random() * 0.5 + (wave * 0.02), shootPattern: pattern, shootCooldown: Math.max(800, 3000 - wave * 40), lastShotTime: Date.now() }); } }
-    const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 2 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 1.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 1.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
     
-    function spawnBoss() { const weaponSize = CONFIG.BOSS_WEAPON_SIZE; const parts = [ { id: 'weapon1', x: 25, y: 70, width: weaponSize, height: weaponSize }, { id: 'weapon2', x: CONFIG.BOSS_WIDTH - weaponSize - 25, y: 70, width: weaponSize, height: weaponSize } ]; boss = { x: canvas.width / 2 - CONFIG.BOSS_WIDTH / 2, y: -CONFIG.BOSS_HEIGHT, width: CONFIG.BOSS_WIDTH, height: CONFIG.BOSS_HEIGHT, health: 150 + (bossCount * 75), maxHealth: 150 + (bossCount * 75), vy: 0.5, vx: 1, patrolRange: [20, canvas.width - CONFIG.BOSS_WIDTH - 20], targetY: 50, phase: 1, shotAngle: 0, lastShotTime: Date.now(), parts: [] }; parts.forEach(p => { boss.parts.push({ ...p, health: 50 + (bossCount * 25), maxHealth: 50 + (bossCount * 25), destroyed: false, lastShotTime: 0, shootCooldown: 1200 - (bossCount * 100) }); }); }
-    function updateBoss(now) { if (!boss) return; if (boss.y < boss.targetY) { boss.y += boss.vy; } else { boss.x += boss.vx; if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) { boss.vx *= -1; } } if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; } if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; } if (boss.phase === 1) { boss.parts.forEach(part => { if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) { part.lastShotTime = now; const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x))); enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 }); } }); } else { const cooldown = (boss.phase === 3) ? 700 - (bossCount * 50) : 1000 - (bossCount * 50); if (now - boss.lastShotTime > cooldown) { boss.lastShotTime = now; boss.shotAngle += 0.2; for (let i = 0; i < 6; i++) { const angle = boss.shotAngle + (i * Math.PI / 3); enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } if (boss.phase === 3) { const angleToPlayer = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2)); for (let i = -1; i <= 1; i++) { enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 7, height: 20, vx: Math.cos(angleToPlayer + i * 0.15) * 3, vy: Math.sin(angleToPlayer + i * 0.15) * 3 }); } } } } }
+    // ALTERADO: Inimigos agora são mais fortes e têm movimento horizontal
+    function spawnEnemies() {
+        const enemyCount = 3 + Math.floor(wave * 1.5);
+        for (let i = 0; i < enemyCount; i++) {
+            const health = 3 + Math.floor(wave * 0.8);
+            const patterns = ['single', 'spread'];
+            if (wave > 5) patterns.push('homing');
+            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+            enemies.push({
+                x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE),
+                y: -50 - (i * 60),
+                width: CONFIG.ENEMY_SIZE,
+                height: CONFIG.ENEMY_SIZE,
+                health: health,
+                maxHealth: health,
+                vy: 1 + Math.random() * 0.5 + (wave * 0.05), // Mais rápido com as ondas
+                vx: (Math.random() - 0.5) * 2, // Movimento horizontal
+                shootPattern: pattern,
+                shootCooldown: Math.max(500, 2500 - wave * 50), // Atiram mais rápido com as ondas
+                lastShotTime: Date.now()
+            });
+        }
+    }
+    const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 3 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 2.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 2.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
+    
+    // ALTERADO: Boss com mais vida e novos ataques
+    function spawnBoss() {
+        const weaponSize = CONFIG.BOSS_WEAPON_SIZE;
+        const parts = [ { id: 'weapon1', x: 25, y: 70, width: weaponSize, height: weaponSize }, { id: 'weapon2', x: CONFIG.BOSS_WIDTH - weaponSize - 25, y: 70, width: weaponSize, height: weaponSize } ];
+        boss = {
+            x: canvas.width / 2 - CONFIG.BOSS_WIDTH / 2, y: -CONFIG.BOSS_HEIGHT, width: CONFIG.BOSS_WIDTH, height: CONFIG.BOSS_HEIGHT,
+            health: 300 + (bossCount * 150), maxHealth: 300 + (bossCount * 150),
+            vy: 0.5, vx: 1.5, patrolRange: [20, canvas.width - CONFIG.BOSS_WIDTH - 20],
+            targetY: 50, phase: 1, shotAngle: 0, shotAngleIncrement: 0.05, // Para o ataque espiral
+            lastShotTime: Date.now(), lastSpiralShotTime: Date.now(),
+            parts: []
+        };
+        parts.forEach(p => {
+            boss.parts.push({ ...p, health: 100 + (bossCount * 50), maxHealth: 100 + (bossCount * 50), destroyed: false, lastShotTime: 0, shootCooldown: Math.max(600, 1000 - (bossCount * 80)) });
+        });
+    }
 
-    function fireProjectiles() { const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y, d = player.damage; const p = { s, damage: d, health: 1 }; switch (player.shotCount) { case 2: projectiles.push({ ...p, x: x - 10, y, w: 5, h: 20 }); projectiles.push({ ...p, x: x + 5, y, w: 5, h: 20 }); break; case 3: projectiles.push({ ...p, x: x - 5, y, w: 6, h: 18 }); projectiles.push({ ...p, x: x - 15, y, w: 6, h: 18, vx: -0.5 }); projectiles.push({ ...p, x: x + 5, y, w: 6, h: 18, vx: 0.5 }); break; case 4: projectiles.push({ ...p, x: x - 18, y, w: 7, h: 16, vx: -0.2 }); projectiles.push({ ...p, x: x - 6, y, w: 7, h: 16, vx: 0.2 }); projectiles.push({ ...p, x: x + 6, y, w: 7, h: 16, vx: -0.2 }); projectiles.push({ ...p, x: x + 18, y, w: 7, h: 16, vx: 0.2 }); break; case 5: projectiles.push({ ...p, x: x - 5, y, w: 8, h: 15 }); projectiles.push({ ...p, x: x - 25, y, w: 8, h: 15, vx: -0.8 }); projectiles.push({ ...p, x: x - 10, y, w: 8, h: 15, vx: -0.3 }); projectiles.push({ ...p, x: x + 2, y, w: 8, h: 15, vx: 0.3 }); projectiles.push({ ...p, x: x + 17, y, w: 8, h: 15, vx: 0.8 }); break; } }
+    // ALTERADO: Lógica de ataque e movimento do Boss totalmente refeita
+    function updateBoss(now) {
+        if (!boss) return;
+        
+        // Movimento
+        if (boss.y < boss.targetY) {
+            boss.y += boss.vy;
+        } else {
+            // Movimento vertical sutil (senoide)
+            boss.y = boss.targetY + Math.sin(now / 1500) * 20;
+            // Patrulha horizontal
+            boss.x += boss.vx;
+            if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) {
+                boss.vx *= -1;
+            }
+        }
+        
+        // Transição de fases
+        if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; }
+        if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; }
+
+        // Lógica de ataque por fase
+        if (boss.phase === 1) {
+            // Fase 1: Atira com as armas
+            boss.parts.forEach(part => {
+                if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) {
+                    part.lastShotTime = now;
+                    const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x)));
+                    enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, vx: Math.cos(angle) * 3, vy: Math.sin(angle) * 3 });
+                }
+            });
+        } else {
+            // Fases 2 e 3: Ataque em espiral
+            const spiralCooldown = (boss.phase === 3) ? 50 : 80; // Espiral mais rápido na fase 3
+            if (now - boss.lastSpiralShotTime > spiralCooldown) {
+                boss.lastSpiralShotTime = now;
+                boss.shotAngle += boss.shotAngleIncrement;
+                const numSpiralShots = 2; // Dispara de pontos opostos para criar o túnel
+                for (let i = 0; i < numSpiralShots; i++) {
+                    const angle = boss.shotAngle + (i * Math.PI * (2 / numSpiralShots));
+                    enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
+                }
+            }
+            
+            // Fase 3: Adiciona tiros teleguiados
+            const homingCooldown = 1200 - (bossCount * 100);
+            if (boss.phase === 3 && now - boss.lastShotTime > homingCooldown) {
+                boss.lastShotTime = now;
+                const angleToPlayer = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2));
+                for (let i = -1; i <= 1; i++) {
+                    enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 7, height: 20, vx: Math.cos(angleToPlayer + i * 0.15) * 3.5, vy: Math.sin(angleToPlayer + i * 0.15) * 3.5 });
+                }
+            }
+        }
+    }
+
+    // ALTERADO: Lógica de tiros do jogador para suportar de 1 a 5 tiros
+    function fireProjectiles() {
+        const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y, d = player.damage;
+        const p = { s, damage: d, health: 1 };
+        switch (player.shotCount) {
+            case 1: projectiles.push({ ...p, x: x - 3, y, w: 6, h: 20 }); break;
+            case 2: projectiles.push({ ...p, x: x - 10, y, w: 5, h: 20 }); projectiles.push({ ...p, x: x + 5, y, w: 5, h: 20 }); break;
+            case 3: projectiles.push({ ...p, x: x - 5, y, w: 6, h: 18 }); projectiles.push({ ...p, x: x - 15, y, w: 6, h: 18, vx: -0.5 }); projectiles.push({ ...p, x: x + 5, y, w: 6, h: 18, vx: 0.5 }); break;
+            case 4: projectiles.push({ ...p, x: x - 18, y, w: 7, h: 16, vx: -0.2 }); projectiles.push({ ...p, x: x - 6, y, w: 7, h: 16, vx: 0.2 }); projectiles.push({ ...p, x: x + 6, y, w: 7, h: 16, vx: -0.2 }); projectiles.push({ ...p, x: x + 18, y, w: 7, h: 16, vx: 0.2 }); break;
+            case 5: projectiles.push({ ...p, x: x - 5, y, w: 8, h: 15 }); projectiles.push({ ...p, x: x - 25, y, w: 8, h: 15, vx: -0.8 }); projectiles.push({ ...p, x: x - 10, y, w: 8, h: 15, vx: -0.3 }); projectiles.push({ ...p, x: x + 2, y, w: 8, h: 15, vx: 0.3 }); projectiles.push({ ...p, x: x + 17, y, w: 8, h: 15, vx: 0.8 }); break;
+        }
+    }
     function fireSuperWeapon() { enemies.forEach(e => { score += 100; playerCurrency += 100; }); enemies = []; enemyProjectiles = []; }
     
     function spawnPowerup(x, y) { const dropPowerup = (type, px, py) => powerups.push({ x: px, y: py, width: 30, height: 30, type, speed: 2 }); let dropped = 0; const dropX = x - 15; if (Math.random() <= 0.05) { dropPowerup('shotSpeed', dropX + (dropped * 35), y); dropped++; } if (Math.random() <= 0.05) { dropPowerup('health', dropX + (dropped * 35), y); } }
@@ -176,10 +280,12 @@ window.onload = function() {
         enemyProjectiles.forEach((p, i) => { const vy = p.vy || 0, vx = p.vx || 0; p.y += vy; p.x += vx; if (p.y > canvas.height || p.y < -p.height || p.x < -p.width || p.x > canvas.width) enemyProjectiles.splice(i, 1); });
         powerups.forEach((p, i) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(i, 1); });
         damageNumbers.forEach((dn, i) => { dn.y += dn.vy; dn.life--; if (dn.life <= 0) damageNumbers.splice(i, 1); });
+        
+        // ALTERADO: Cadência de tiro do drone diminuída
         drones.forEach(d => {
             const targetX = player.x + (d.side === 'left' ? -40 : player.width + 10);
             d.x += (targetX - d.x) * 0.1; d.y += (player.y - d.y) * 0.1;
-            if(now - d.lastShotTime > player.fireRate * 3 && (enemies.length > 0 || bossActive)) {
+            if(now - d.lastShotTime > player.fireRate * 3.3 && (enemies.length > 0 || bossActive)) { // Multiplicador aumentado para tiro mais lento
                 let closest = null, minDist = Infinity;
                 const targets = [...enemies, ...(boss ? [boss, ...boss.parts.filter(part => !part.destroyed)] : [])];
                 targets.forEach(e => {
@@ -187,7 +293,7 @@ window.onload = function() {
                     const dx = e_x - d.x, dy = e_y - d.y, dist = dx * dx + dy * dy;
                     if(dist < minDist) { minDist = dist; closest = e; }
                 });
-                if(closest) { homingMissiles.push({ x: d.x, y: d.y, w: 8, h: 8, speed: 4, target: closest, damage: player.damage / 2, turnSpeed: 0.1 }); d.lastShotTime = now; }
+                if(closest) { homingMissiles.push({ x: d.x, y: d.y, w: 12, h: 12, speed: 4, target: closest, damage: player.damage / 2, turnSpeed: 0.1 }); d.lastShotTime = now; }
             }
         });
         homingMissiles.forEach((m, i) => {
@@ -204,7 +310,22 @@ window.onload = function() {
             if (m.x < 0 || m.x > canvas.width || m.y < 0 || m.y > canvas.height) homingMissiles.splice(i, 1);
         });
         if(bossActive) { updateBoss(now); }
-        else { enemies.forEach((enemy, index) => { enemy.y += enemy.vy; if (enemy.y > canvas.height) { enemies.splice(index, 1); } else if (now - enemy.lastShotTime > enemy.shootCooldown) { enemyShootingPatterns[enemy.shootPattern](enemy); enemy.lastShotTime = now; } }); }
+        else {
+            enemies.forEach((enemy, index) => {
+                enemy.y += enemy.vy;
+                enemy.x += enemy.vx;
+                // NOVO: Faz o inimigo ricochetear nas bordas
+                if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+                    enemy.vx *= -1;
+                }
+                if (enemy.y > canvas.height) {
+                    enemies.splice(index, 1);
+                } else if (now - enemy.lastShotTime > enemy.shootCooldown) {
+                    enemyShootingPatterns[enemy.shootPattern](enemy);
+                    enemy.lastShotTime = now;
+                }
+            });
+        }
     }
     
     // --- FUNÇÕES DE DESENHO ---
@@ -226,17 +347,15 @@ window.onload = function() {
         setShadow(); ctx.globalAlpha = player.isHit ? 0.5 : 1.0; ctx.drawImage(assets.player, player.x, player.y, player.width, player.height); resetShadow(); ctx.globalAlpha = 1.0;
         if (player.hasShield && player.shieldActive) { ctx.beginPath(); ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2 + 10, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(0, 191, 255, 0.7)'; ctx.lineWidth = 3; ctx.stroke(); }
         
-        const projectileColors = ['#00FF00', '#00FFFF', '#FFFF00', '#FF00FF', '#FF69B4']; ctx.fillStyle = projectileColors[player.shotCount - 2] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+        const projectileColors = ['#FFFFFF', '#00FF00', '#00FFFF', '#FFFF00', '#FF00FF', '#FF69B4']; ctx.fillStyle = projectileColors[player.shotCount] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
         
         enemies.forEach(e => { const hp = e.health / e.maxHealth; ctx.fillStyle = '#f00'; ctx.fillRect(e.x, e.y - 10, e.width, 5); ctx.fillStyle = '#0f0'; ctx.fillRect(e.x, e.y - 10, e.width * hp, 5); setShadow(); ctx.drawImage(assets.enemy1, e.x, e.y, e.width, e.height); resetShadow(); });
         ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
         
-        // ALTERADO: Desenha a imagem do drone ao invés de um círculo, com sombra
         setShadow();
         drones.forEach(d => { ctx.drawImage(assets.drone, d.x - d.width / 2, d.y - d.height / 2, d.width, d.height); });
         resetShadow();
         
-        // ALTERADO: Desenha a imagem do míssil ao invés de um círculo
         homingMissiles.forEach(m => { ctx.drawImage(assets.missel, m.x - m.w / 2, m.y - m.h / 2, m.w, m.h); });
 
         powerups.forEach(p => { const isHealth = p.type === 'health'; ctx.fillStyle = isHealth ? '#ff4d4d' : '#FFD700'; ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#000"; ctx.font = `bold 24px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(isHealth ? '♥' : 'S', p.x + p.width / 2, p.y + p.height / 2 + 2); });
