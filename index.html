@@ -57,11 +57,44 @@
              justify-content: center;
              align-items: center;
         }
+
+        /* NOVO: Estilo para o botão de pause */
+        #pause-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            z-index: 6;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 8px 0;
+        }
+        #pause-btn .pause-line {
+            width: 70%;
+            height: 3px;
+            background-color: #fff;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
+        
+        <!-- NOVO: Botão de Pause para mobile -->
+        <div id="pause-btn" class="hidden">
+            <div class="pause-line"></div>
+            <div class="pause-line"></div>
+            <div class="pause-line"></div>
+        </div>
+
         <div id="main-menu" class="overlay"><p id="loading-text" style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando...</p><p>Maior Pontuação: <span id="high-score-display">0</span></p><div id="main-menu-buttons"><button id="start-btn" class="button" disabled>Iniciar Jogo</button><button id="upgrades-btn" class="button secondary">Melhorias</button><button id="reset-data-btn" class="button danger">Resetar Progresso</button></div></div>
         <div id="stage-select-overlay" class="overlay hidden"><h2>Selecionar Fase</h2><div id="stage-select-container"><div id="stage-selector"><button id="prev-stage-btn" class="arrow-btn"><</button><span id="stage-display"></span><button id="next-stage-btn" class="arrow-btn">></button></div><button id="confirm-stage-btn" class="button">Iniciar</button><button id="back-to-menu-from-stage-select-btn" class="button secondary">Voltar</button></div></div>
         <div id="upgrade-store-overlay" class="overlay hidden"><h2>Melhorias</h2><p id="currency-display">Pontos: 0</p><div id="upgrade-store"></div><button id="back-to-menu-btn" class="button">Voltar</button></div>
@@ -77,7 +110,8 @@ window.onload = function() {
     // ----------------------------------------------------------------------------------
     const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
     const gameContainer = document.getElementById('game-container');
-    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
+    // MODIFICADO: Adicionado pauseBtn ao objeto ui
+    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text'), pauseBtn: document.getElementById('pause-btn') };
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5, TOUCH_OFFSET_Y: 80, PLAYER_TOUCH_LERP_FACTOR: 0.25 };
@@ -120,7 +154,6 @@ window.onload = function() {
                 img.src = src;
             });
         });
-
         const audioPromises = Object.entries(AUDIO_PATHS).map(([name, src]) => {
             return new Promise((resolve, reject) => {
                 const audio = new Audio();
@@ -130,7 +163,6 @@ window.onload = function() {
                 audio.src = src;
             });
         });
-
         return Promise.all([...imagePromises, ...audioPromises]);
     }
     
@@ -168,7 +200,8 @@ window.onload = function() {
     function saveData() { localStorage.setItem('playerCurrency', playerCurrency); localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades)); const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0'); if (score > highScore) localStorage.setItem('aeroFighterHighScore', score); }
     function resetData(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
     
-    function showMainMenu(e) { if(isMobile && e) e.preventDefault(); playTheme(); ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
+    // MODIFICADO: esconde o botão de pause ao voltar pro menu
+    function showMainMenu(e) { if(isMobile && e) e.preventDefault(); playTheme(); ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); if(isMobile) ui.pauseBtn.classList.add('hidden'); }
     function showUpgradeStore(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
     function showStageSelect(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
     function populateUpgradeStore() { const clickEvent = isMobile ? 'touchstart' : 'click'; ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level -1)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener(clickEvent, buyUpgrade)); }
@@ -179,8 +212,15 @@ window.onload = function() {
 
     // --- LÓGICA PRINCIPAL DO JOGO ---
     function initGame(startingWave) {
-        stopTheme();
-        ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
+        // REMOVIDO: stopTheme(); para que a música continue durante o jogo.
+        ui.stageSelectOverlay.classList.add('hidden');
+        ui.gameOverScreen.classList.add('hidden');
+        ui.gameUI.classList.remove('hidden');
+        if (isMobile) {
+            ui.actionButtons.classList.remove('hidden');
+            ui.pauseBtn.classList.remove('hidden'); // MODIFICADO: Mostra o botão de pause no mobile
+        }
+        
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
@@ -197,7 +237,7 @@ window.onload = function() {
 
     function startNextWave() { wave++; if (player.hasShield) player.shieldActive = true; if (wave > 0 && wave % 10 === 0) { bossActive = true; spawnBoss(); } else { spawnEnemies(); } }
     function handlePlayerHit() { if (player.shieldActive) { player.shieldActive = false; player.isHit = true; player.lastHitTime = Date.now(); return; } player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) { gameOver = true; } }
-    function togglePause(e) { if(isMobile && e) e.preventDefault(); playSound('menuSelect'); isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); }
+    function togglePause(e) { if(isMobile && e) e.preventDefault(); isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); if(!isPaused) playSound('menuSelect'); }
     function endGameAndGoToMenu(e) { if(isMobile && e) e.preventDefault(); playSound('menuSelect'); gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
@@ -254,7 +294,6 @@ window.onload = function() {
     }
     const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 3 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 2.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 2.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
     
-    // --- INÍCIO DA MODIFICAÇÃO DO CHEFE ---
     function spawnBoss() {
         const weaponSize = CONFIG.BOSS_WEAPON_SIZE;
         const parts = [
@@ -266,15 +305,11 @@ window.onload = function() {
             y: -CONFIG.BOSS_HEIGHT,
             width: CONFIG.BOSS_WIDTH,
             height: CONFIG.BOSS_HEIGHT,
-            // Vida do corpo principal triplicada
             health: (300 + (bossCount * 150)) * 3,
             maxHealth: (300 + (bossCount * 150)) * 3,
-            // Velocidades para patrulha
             vx: 1.2,
             vy: 0.7,
-            // Área de patrulha (horizontal e vertical)
             patrolRangeX: [20, canvas.width - CONFIG.BOSS_WIDTH - 20],
-            // O chefe vai patrulhar entre 50px do topo e 60% da altura da tela.
             patrolRangeY: [50, canvas.height * 0.6],
             phase: 1,
             shotAngle: 0,
@@ -289,7 +324,6 @@ window.onload = function() {
         parts.forEach(p => {
             boss.parts.push({
                 ...p,
-                // Vida das partes triplicada
                 health: (100 + (bossCount * 50)) * 3,
                 maxHealth: (100 + (bossCount * 50)) * 3,
                 destroyed: false,
@@ -301,31 +335,20 @@ window.onload = function() {
 
     function updateBoss(now) {
         if (!boss) return;
-
-        // --- LÓGICA DE MOVIMENTO ---
-        // Fase 1: Entrando na tela até atingir o topo da área de patrulha
         if (boss.y < boss.patrolRangeY[0]) {
-            boss.y += 1; // Velocidade de entrada constante
-        }
-        // Fase 2: Patrulhando dentro da área definida
-        else {
+            boss.y += 1;
+        } else {
             boss.x += boss.vx;
             boss.y += boss.vy;
-
-            // Quica nas paredes horizontais (esquerda/direita) da patrulha
             if (boss.x <= boss.patrolRangeX[0] || boss.x + boss.width >= canvas.width - boss.patrolRangeX[0]) {
                 boss.vx *= -1;
             }
-            // Quica nas paredes verticais (topo/base) da patrulha
             if (boss.y <= boss.patrolRangeY[0] || boss.y + boss.height >= boss.patrolRangeY[1]) {
                 boss.vy *= -1;
             }
         }
-
-        // --- LÓGICA DE ATAQUE (não foi alterada) ---
         if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; }
         if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; }
-
         if (boss.phase === 1) {
             boss.parts.forEach(part => {
                 if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) {
@@ -339,7 +362,6 @@ window.onload = function() {
             if (now - boss.lastSpiralShotTime > spiralCooldown) {
                 boss.lastSpiralShotTime = now;
                 boss.shotAngle += boss.shotAngleIncrement;
-
                 if (boss.spiralWaveCount < boss.SPIRAL_WAVE_LENGTH) {
                     const numSpiralShots = 2;
                     for (let i = 0; i < numSpiralShots; i++) {
@@ -347,13 +369,11 @@ window.onload = function() {
                         enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
                     }
                 }
-                
                 boss.spiralWaveCount++;
                 if (boss.spiralWaveCount >= boss.SPIRAL_WAVE_LENGTH + boss.SPIRAL_GAP_LENGTH) {
                     boss.spiralWaveCount = 0;
                 }
             }
-            
             const homingCooldown = 1200 - (bossCount * 100);
             if (boss.phase === 3 && now - boss.lastShotTime > homingCooldown) {
                 boss.lastShotTime = now;
@@ -364,7 +384,6 @@ window.onload = function() {
             }
         }
     }
-    // --- FIM DA MODIFICAÇÃO DO CHEFE ---
 
     function fireProjectiles() {
         playSound('shoot');
@@ -523,7 +542,7 @@ window.onload = function() {
     // --- GAME LOOP & LISTENERS ---
     function gameLoop() {
         if (!gameStarted) return;
-        if (gameOver) { saveData(); ui.finalScoreDisplay.textContent = score.toLocaleString('pt-BR'); ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); ui.gameOverScreen.classList.remove('hidden'); gameStarted = false; return; }
+        if (gameOver) { saveData(); ui.finalScoreDisplay.textContent = score.toLocaleString('pt-BR'); ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); ui.gameOverScreen.classList.remove('hidden'); if(isMobile) ui.pauseBtn.classList.add('hidden'); gameStarted = false; return; }
         if (isPaused) { requestAnimationFrame(gameLoop); return; }
         const now = Date.now();
         if (!bossActive && enemies.length === 0) startNextWave();
@@ -558,6 +577,8 @@ window.onload = function() {
     ui.gameOverToMenuBtn.addEventListener(clickEvent, (e) => { if (isMobile) e.preventDefault(); playSound('menuSelect'); showMainMenu(); });
     ui.continueBtn.addEventListener(clickEvent, togglePause);
     ui.pauseToMenuBtn.addEventListener(clickEvent, endGameAndGoToMenu);
+    // NOVO: Evento de clique para o botão de pause do mobile
+    if(isMobile) ui.pauseBtn.addEventListener(clickEvent, togglePause);
 
     window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; if(e.key === 'Escape' && gameStarted && !gameOver) { playSound('menuSelect'); togglePause(); } });
     window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = false; });
@@ -577,6 +598,7 @@ window.onload = function() {
         specialBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = false; });
         gameContainer.addEventListener('touchstart', (e) => {
             if (!gameStarted || isPaused) return;
+            if (e.target === ui.pauseBtn || ui.pauseBtn.contains(e.target)) return; // Impede que o toque no botão de pause mova a nave
             e.preventDefault();
             if (controllingTouchId === null) {
                 const touch = e.changedTouches[0];
