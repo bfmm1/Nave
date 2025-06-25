@@ -8,22 +8,39 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
         body { font-family: 'Arial', sans-serif; background-color: #111; color: #fff; display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; overflow: hidden; }
         #game-container { position: relative; aspect-ratio: 9 / 14; height: 95vh; max-height: 95vh; width: calc(95vh * (9 / 14)); max-width: 100vw; background-color: #000; overflow: hidden; border: 2px solid #333; cursor: crosshair; }
-        canvas { width: 100%; height: 100%; display: block; background-image: radial-gradient(white 1px, transparent 0), radial-gradient(white 1px, transparent 0); background-size: 40px 40px, 40px 40px; background-position: 0 0, 20px 20px; animation: scroll-background 4s linear infinite; } /* Velocidade Aumentada */
+        canvas { width: 100%; height: 100%; display: block; background-image: radial-gradient(white 1px, transparent 0), radial-gradient(white 1px, transparent 0); background-size: 40px 40px, 40px 40px; background-position: 0 0, 20px 20px; animation: scroll-background 4s linear infinite; }
         @keyframes scroll-background { from { background-position-y: 0px; } to { background-position-y: 400px; } }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; z-index: 10; }
-        .overlay h1 { font-size: 2.5em; margin-bottom: 20px; text-shadow: 0 0 10px #0ff; }
-        .overlay p { font-size: 1.2em; margin-bottom: 30px; }
-        .button { padding: 15px 30px; font-size: 1.5em; background-color: #0af; border: none; color: #fff; cursor: pointer; border-radius: 5px; transition: background-color 0.3s; }
+        
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; z-index: 10; }
+        .overlay h1, .overlay h2 { text-shadow: 0 0 10px #0ff; }
+        .overlay h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .overlay h2 { font-size: 1.8em; margin-bottom: 20px; }
+        .overlay p { font-size: 1.2em; margin-bottom: 20px; }
+        .button { padding: 12px 25px; font-size: 1.3em; background-color: #0af; border: none; color: #fff; cursor: pointer; border-radius: 5px; transition: background-color 0.3s; margin-top: 10px; width: 250px; }
         .button:hover { background-color: #08d; }
-        #game-ui { position: absolute; top: 10px; left: 10px; right: 10px; font-size: 1.2em; text-shadow: 1px 1px 2px #000; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
-        #ui-top-row { display: flex; justify-content: space-between; }
-        .health-bar-container { width: 120px; height: 20px; background-color: #555; border: 1px solid #fff; border-radius: 5px; overflow: hidden; }
-        .health-bar-fill { width: 100%; height: 100%; background-color: #4caf50; transition: width 0.2s linear; }
+        .button.secondary { background-color: #555; }
+        .button.secondary:hover { background-color: #777; }
+        .button.danger { background-color: #a00; font-size: 1em; }
+        .button.danger:hover { background-color: #c00; }
+        .button:disabled { background-color: #333; color: #888; cursor: not-allowed; }
+        #main-menu-buttons, #stage-select-container { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        #stage-selector { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; }
+        #stage-display { font-size: 1.4em; color: #ffc107; width: 250px; }
+        .arrow-btn { font-size: 2em; background: none; border: none; color: #fff; cursor: pointer; padding: 0 15px; }
+        .arrow-btn:disabled { color: #555; }
+        #upgrade-store { overflow-y: auto; width: 100%; padding: 10px; max-height: 60vh; }
+        #currency-display { font-size: 1.3em; color: #ffd700; margin-bottom: 15px; }
+        .upgrade-item { background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; }
+        .upgrade-item h3 { margin-bottom: 5px; color: #0cf; }
+        .upgrade-item p { font-size: 0.9em; margin: 0 0 8px 0; }
+        #game-ui { position: absolute; top: 10px; left: 10px; right: 10px; text-shadow: 1px 1px 2px #000; display: flex; flex-direction: column; gap: 8px; z-index: 5; font-size: 1.1em; }
+        #ui-top-row, #ui-bottom-row { display: flex; justify-content: space-between; align-items: center; }
+        #player-health-display, #player-special-display { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.4); padding: 3px 8px; border-radius: 5px; }
         #action-buttons { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; pointer-events: all; z-index: 5; }
-        .action-btn { width: 75px; height: 75px; border-radius: 50%; background-color: rgba(255, 80, 80, 0.5); border: 2px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: center; align-items: center; font-size: 1.1em; color: #fff; font-weight: bold; }
-        .action-btn:active { background-color: rgba(255, 80, 80, 0.8); }
+        .action-btn { width: 75px; height: 75px; border-radius: 50%; background-color: rgba(255, 80, 80, 0.5); border: 2px solid rgba(255, 255, 255, 0.5); display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-weight: bold; }
+        .action-btn-text { font-size: 0.8em; }
+        .action-btn-count { font-size: 1.2em; }
         #special-btn { background-color: rgba(80, 80, 255, 0.5); }
-        #special-btn:active { background-color: rgba(80, 80, 255, 0.8); }
         #joystick-base { position: absolute; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border-radius: 50%; transform: translate(-50%, -50%); z-index: 5; }
         #joystick-stick { position: absolute; width: 60px; height: 60px; background-color: rgba(255, 255, 255, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 6; }
         .hidden { display: none !important; }
@@ -32,200 +49,233 @@
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
-        <div id="main-menu" class="overlay"><p style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando...</p><h1>Aero Fighter</h1><p>Maior Pontuação: <span id="high-score-display">0</span></p><button id="start-btn" class="button" disabled>Iniciar Jogo</button></div>
-        <div id="game-over-screen" class="overlay hidden"><h1>Fim de Jogo</h1><p>Sua pontuação: <span id="final-score">0</span></p><button id="restart-btn" class="button">Jogar Novamente</button></div>
-        <div id="game-ui" class="hidden"><div id="ui-top-row"><span id="score">Pontos: 0</span><span id="time">Tempo: 0s</span></div><div class="health-bar-container"><div id="health-bar" class="health-bar-fill"></div></div></div>
-        <div id="virtual-controls"><div id="joystick-base" class="hidden"></div><div id="joystick-stick" class="hidden"></div><div id="action-buttons" class="hidden"><button id="special-btn" class="action-btn">Especial</button><button id="shoot-btn" class="action-btn">Atirar</button></div></div>
+        <div id="main-menu" class="overlay"><p id="loading-text" style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando imagens...</p><h1>Aero Fighter</h1><p>Maior Pontuação: <span id="high-score-display">0</span></p><div id="main-menu-buttons"><button id="start-btn" class="button" disabled>Iniciar Jogo</button><button id="upgrades-btn" class="button secondary">Melhorias</button><button id="reset-data-btn" class="button danger">Resetar Progresso</button></div></div>
+        <div id="stage-select-overlay" class="overlay hidden"><h2>Selecionar Fase</h2><div id="stage-select-container"><div id="stage-selector"><button id="prev-stage-btn" class="arrow-btn"><</button><span id="stage-display"></span><button id="next-stage-btn" class="arrow-btn">></button></div><button id="confirm-stage-btn" class="button">Iniciar</button><button id="back-to-menu-from-stage-select-btn" class="button secondary">Voltar</button></div></div>
+        <div id="upgrade-store-overlay" class="overlay hidden"><h2>Melhorias</h2><p id="currency-display">Pontos: 0</p><div id="upgrade-store"></div><button id="back-to-menu-btn" class="button">Voltar</button></div>
+        <div id="pause-menu-overlay" class="overlay hidden"><h2>Pausado</h2><div id="pause-menu-buttons"><button id="continue-btn" class="button">Continuar</button><button id="pause-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
+        <div id="game-over-screen" class="overlay hidden"><h1>Fim de Jogo</h1><p>Sua pontuação: <span id="final-score">0</span></p><div id="game-over-buttons"><button id="restart-btn" class="button">Jogar Novamente</button><button id="game-over-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
+        <div id="game-ui" class="hidden"><div id="ui-top-row"><span id="score">Pontos: 0</span><span id="wave">Onda: 1</span></div><div id="ui-bottom-row"><div id="player-health-display"><span>♥</span><span id="health-text">10/10</span></div><div id="player-special-display"><span>💣</span><span id="special-text">1</span></div></div></div>
+        <div id="virtual-controls"><div id="joystick-base" class="hidden"></div><div id="joystick-stick" class="hidden"></div><div id="action-buttons" class="hidden"><button id="special-btn" class="action-btn"><span class="action-btn-text">Especial</span><span id="special-count-btn" class="action-btn-count">1</span></button><button id="shoot-btn" class="action-btn">Atirar</button></div></div>
     </div>
-    <script>
-    window.onload = function() {
-        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), gameContainer = document.getElementById('game-container');
-        const uiElements = { mainMenu: document.getElementById('main-menu'), gameUI: document.getElementById('game-ui'), gameOverScreen: document.getElementById('game-over-screen'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.getElementById('joystick-base'), joystickStick: document.getElementById('joystick-stick'), startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn'), scoreDisplay: document.getElementById('score'), timeDisplay: document.getElementById('time'), finalScoreDisplay: document.getElementById('final-score'), highScoreDisplay: document.getElementById('high-score-display'), healthBarFill: document.getElementById('health-bar') };
-        canvas.width = 450; canvas.height = 700;
-        const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-        const playerImage = new Image();
-        playerImage.src = 'navep1.png';
-        playerImage.onload = () => { uiElements.startBtn.disabled = false; uiElements.mainMenu.querySelector('p').style.display = 'none'; };
-        playerImage.onerror = () => { console.log("Erro ao carregar navep1.png. Usando quadrado azul."); playerImage.useFallback = true; uiElements.startBtn.disabled = false; uiElements.mainMenu.querySelector('p').style.display = 'none'; };
-        
-        // --- ESTADO DO JOGO ---
-        let gameStarted, gameOver, score, gameStartTime, lastSpawnTime, spawnCooldown, lastHealthUpgradeTime, totalPausedTime, pauseStartTime, bossCount;
-        let highScore = localStorage.getItem('aeroFighterHighScore') || 0;
-        uiElements.highScoreDisplay.textContent = highScore;
-        let player, projectiles, enemies, enemyProjectiles, powerups, boss;
-        let bossActive = false;
-        const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
-        const playerSettings = { width: 50, height: 50, speed: 4, initialMaxHealth: 10, shootCooldown: 200, lastShotTime: 0, specialCooldown: 15000, lastSpecialTime: -15000, hitInvincibilityDuration: 300 };
-        const projectileColors = ['#00FF00', '#00FFFF', '#FFFF00', '#FF00FF'];
-        
-        function initGame() {
-            uiElements.mainMenu.classList.add('hidden'); uiElements.gameOverScreen.classList.add('hidden'); uiElements.gameUI.classList.remove('hidden'); if (isMobile) uiElements.actionButtons.classList.remove('hidden');
-            gameStarted = true; gameOver = false; score = 0;
-            gameStartTime = Date.now(); lastSpawnTime = Date.now(); lastHealthUpgradeTime = gameStartTime;
-            totalPausedTime = 0; pauseStartTime = 0; bossCount = 0;
-            spawnCooldown = 2000; bossActive = false;
-            projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; boss = null;
-            player = { x: canvas.width / 2 - playerSettings.width / 2, y: canvas.height - 100, width: playerSettings.width, height: playerSettings.height, speed: playerSettings.speed, maxHealth: playerSettings.initialMaxHealth, health: playerSettings.initialMaxHealth, isHit: false, lastHitTime: 0, shotCount: 2, projectileSpeed: 8 };
-            updateUIDisplay(); gameLoop();
-        }
-        function endGame() {
-            gameOver = true; gameStarted = false;
-            uiElements.gameUI.classList.add('hidden');
-            if (isMobile) { uiElements.actionButtons.classList.add('hidden'); uiElements.joystickBase.classList.add('hidden'); uiElements.joystickStick.classList.add('hidden'); }
-            uiElements.gameOverScreen.classList.remove('hidden');
-            uiElements.finalScoreDisplay.textContent = score;
-            if (score > highScore) { highScore = score; localStorage.setItem('aeroFighterHighScore', highScore); uiElements.highScoreDisplay.textContent = highScore; }
-        }
-        function getElapsedTime() {
-            const now = Date.now();
-            if (pauseStartTime > 0) { // Se o jogo estiver pausado (durante a luta do chefe)
-                return (pauseStartTime - gameStartTime - totalPausedTime) / 1000;
-            }
-            return (now - gameStartTime - totalPausedTime) / 1000;
-        }
-        function updateUIDisplay() {
-            const elapsedTime = Math.floor(getElapsedTime());
-            uiElements.scoreDisplay.textContent = `Pontos: ${score}`;
-            uiElements.timeDisplay.textContent = `Tempo: ${elapsedTime}s`;
-            const healthPercentage = (player.health / player.maxHealth) * 100;
-            uiElements.healthBarFill.style.width = `${healthPercentage}%`;
-        }
-        
-        function manageGameFlow(now) {
-            const elapsedTimeInSeconds = getElapsedTime();
-            if (now - lastHealthUpgradeTime > 30000) { lastHealthUpgradeTime = now; player.maxHealth++; player.health = Math.min(player.maxHealth, player.health + 1); }
-            
-            const bossInterval = 180; // 3 minutos
-            if (!bossActive && elapsedTimeInSeconds > 60 + (bossCount * bossInterval)) {
-                bossActive = true; enemies = []; spawnBoss();
-                pauseStartTime = Date.now(); // Pausa o tempo
-            }
-            
-            if (bossActive) updateBoss(now); else spawnEnemies(now, elapsedTimeInSeconds);
-        }
-        function spawnEnemies(now, elapsedTimeInSeconds) {
-            if (enemies.length >= 10) return;
-            spawnCooldown = Math.max(300, 2000 - elapsedTimeInSeconds * 20);
-            if (now - lastSpawnTime > spawnCooldown) {
-                lastSpawnTime = now;
-                const health = 1 + Math.floor(elapsedTimeInSeconds / 30);
-                const initialX = Math.random() * (canvas.width - 40);
-                let patternOptions = ['single', 'spread'];
-                if (elapsedTimeInSeconds > 45) patternOptions.push('homing');
-                if (elapsedTimeInSeconds > 70) patternOptions.push('burst');
-                const pattern = patternOptions[Math.floor(Math.random() * patternOptions.length)];
-                enemies.push({ x: initialX, y: -50, initialX, width: 40, height: 40, health: health, maxHealth: health, vy: 0.8 + Math.random() * 0.5, waveAmplitude: 30 + Math.random() * 40, waveFrequency: 800 + Math.random() * 400, shootPattern: pattern, shootCooldown: 2500 - (elapsedTimeInSeconds * 10), lastShotTime: now });
-            }
-        }
-        const enemyShootingPatterns = {
-            single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, speed: 2 }),
-            spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, speed: 1.75, vx: -0.5, vy: 1.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, speed: 1.75, vx: 0.5, vy: 1.75 }); },
-            burst: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 10, speed: 2.5 }); setTimeout(() => { if (enemies.includes(e)) enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 10, speed: 2.5 }); }, 150); },
-            homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, speed: 2, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); }
-        };
+<script>
+window.onload = function() {
+    // --- SETUP & ELEMENTOS DE UI ---
+    const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.querySelector('#virtual-controls #joystick-base'), joystickStick: document.querySelector('#virtual-controls #joystick-stick'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
+    canvas.width = 450; canvas.height = 700;
+    const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
 
-        function spawnBoss() {
-            const turretPositions = [ {x: -30, y: 50}, {x: 190, y: 50}, {x: 15, y: 80}, {x: 145, y: 80} ];
-            const numTurrets = Math.min(4, 2 + bossCount); // 2 turrets, then 4
-            const parts = [];
-            for (let i = 0; i < numTurrets; i++) {
-                parts.push({
-                    ...turretPositions[i], id: `turret${i}`, width: 40, height: 40,
-                    health: 50 + (bossCount * 25), maxHealth: 50 + (bossCount * 25),
-                    destroyed: false, lastShotTime: 0, shootCooldown: 1200 - (bossCount * 100)
-                });
+    // --- CONFIGURAÇÕES E ASSETS ---
+    const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45 };
+    const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png' };
+    const assets = {};
+    
+    // --- ESTADO GLOBAL (PERSISTENTE) ---
+    let playerCurrency = 0, playerUpgrades = {};
+    const upgradeConfig = { maxHealth: { name: 'Vida Máxima', baseCost: 1000, maxLevel: 10 }, damage: { name: 'Dano da Arma', baseCost: 1500, maxLevel: 10 }, fireRate: { name: 'Cadência de Tiro', baseCost: 2000, maxLevel: 8 }, shotCount: { name: 'Tiro Extra', baseCost: 4000, maxLevel: 3}, drones: { name: 'Drones de Ataque', baseCost: 7500, maxLevel: 2}, shield: { name: 'Escudo Regenerativo', baseCost: 5000, maxLevel: 1 }, specialCount: { name: 'Especiais Extras', baseCost: 3000, maxLevel: 5 } };
+
+    // --- ESTADO DO JOGO (RESETÁVEL) ---
+    let gameStarted, gameOver, isPaused, score, wave, player, projectiles, enemies, enemyProjectiles, powerups, boss, damageNumbers, bossCount, drones, homingMissiles, selectedStageIndex;
+    let bossActive = false;
+    const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
+    
+    // --- FUNÇÕES DE DADOS E UI ---
+    function loadAssets() {
+        const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => {
+            return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; });
+        });
+        return Promise.all(promises);
+    }
+    function loadData() {
+        playerCurrency = parseInt(localStorage.getItem('playerCurrency') || '0', 10);
+        const savedUpgrades = JSON.parse(localStorage.getItem('playerUpgrades') || '{}');
+        playerUpgrades.maxUnlockedStage = parseInt(savedUpgrades.maxUnlockedStage || '1', 10);
+        for (const key in upgradeConfig) { playerUpgrades[key] = savedUpgrades[key] || (key === 'shield' || key === 'drones' ? 0 : 1); }
+        ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR');
+    }
+    function saveData() {
+        localStorage.setItem('playerCurrency', playerCurrency);
+        localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades));
+        const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0');
+        if (score > highScore) localStorage.setItem('aeroFighterHighScore', score);
+    }
+    function resetData() { if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
+    
+    function showMainMenu() { ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
+    function showUpgradeStore() { populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
+    function showStageSelect() { selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
+    function populateUpgradeStore() {
+        ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`;
+        ui.upgradeStore.innerHTML = '';
+        for (const key in upgradeConfig) {
+            const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level));
+            const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item';
+            let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO';
+            itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`;
+            ui.upgradeStore.appendChild(itemDiv);
+        }
+        document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener('click', buyUpgrade));
+    }
+    function buyUpgrade(e) {
+        const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level));
+        if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); }
+    }
+    function updateStageSelectorDisplay() {
+        const stageNum = selectedStageIndex + 1; const startWave = selectedStageIndex * 10 + 1; const endWave = startWave + 9;
+        ui.stageDisplay.textContent = `Fase ${stageNum} (Ondas ${startWave}-${endWave})`;
+        ui.prevStageBtn.disabled = selectedStageIndex === 0; ui.nextStageBtn.disabled = selectedStageIndex >= playerUpgrades.maxUnlockedStage - 1;
+    }
+    function updateUIDisplay() {
+        ui.scoreDisplay.textContent = `Pontos: ${score.toLocaleString('pt-BR')}`; ui.waveDisplay.textContent = `Onda: ${wave}`;
+        ui.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`;
+        ui.specialText.textContent = player.specialAmmo; if (isMobile) ui.specialCountBtn.textContent = player.specialAmmo;
+    }
+    function spawnDamageNumber(amount, x, y, color = '#fff') { damageNumbers.push({ text: Math.round(amount), x: x + 20, y: y, life: 60, vy: -0.5, color }); }
+
+    // --- LÓGICA PRINCIPAL DO JOGO ---
+    function initGame(startingWave) {
+        ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
+        gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
+        projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
+        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 200 - (playerUpgrades.fireRate - 1) * 15, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 2 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
+        if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, side: 'left', lastShotTime: 0 });
+        if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, side: 'right', lastShotTime: 0 });
+        startNextWave();
+        requestAnimationFrame(gameLoop);
+    }
+    function startNextWave() { wave++; if (player.hasShield) player.shieldActive = true; if (wave > 0 && wave % 10 === 0) { bossActive = true; spawnBoss(); } else { spawnEnemies(); } }
+    function handlePlayerHit() { if (player.shieldActive) { player.shieldActive = false; player.isHit = true; player.lastHitTime = Date.now(); return; } player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) { gameOver = true; } }
+    function togglePause() { isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); }
+    function endGameAndGoToMenu() { gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
+    
+    // --- LÓGICA DE OBJETOS DO JOGO ---
+    function updatePlayer(now) { if (player.isHit && now - player.lastHitTime > 300) player.isHit = false; if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; } player.x = Math.max(0, Math.min(canvas.width - player.width, player.x)); player.y = Math.max(0, Math.min(canvas.height - player.height, player.y)); if ((keys.j || mouse.down) && now - player.lastShotTime > player.fireRate) { fireProjectiles(); player.lastShotTime = now; } if (keys.f && player.specialAmmo > 0 && now - player.lastSpecialTime > 1000) { fireSuperWeapon(); player.specialAmmo--; player.lastSpecialTime = now; } }
+    function spawnEnemies() { const enemyCount = 3 + Math.floor(wave * 1.5); for (let i = 0; i < enemyCount; i++) { const health = 1 + Math.floor(wave / 2); const patterns = ['single', 'spread']; if (wave > 5) patterns.push('homing'); const pattern = patterns[Math.floor(Math.random() * patterns.length)]; enemies.push({ x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE), y: -50 - (i * 60), width: CONFIG.ENEMY_SIZE, height: CONFIG.ENEMY_SIZE, health: health, maxHealth: health, vy: 1 + Math.random() * 0.5 + (wave * 0.02), shootPattern: pattern, shootCooldown: Math.max(800, 3000 - wave * 40), lastShotTime: Date.now() }); } }
+    const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 2 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 1.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 1.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
+    
+    function spawnBoss() { const weaponSize = CONFIG.BOSS_WEAPON_SIZE; const parts = [ { id: 'weapon1', x: 25, y: 70, width: weaponSize, height: weaponSize }, { id: 'weapon2', x: CONFIG.BOSS_WIDTH - weaponSize - 25, y: 70, width: weaponSize, height: weaponSize } ]; boss = { x: canvas.width / 2 - CONFIG.BOSS_WIDTH / 2, y: -CONFIG.BOSS_HEIGHT, width: CONFIG.BOSS_WIDTH, height: CONFIG.BOSS_HEIGHT, health: 150 + (bossCount * 75), maxHealth: 150 + (bossCount * 75), vy: 0.5, vx: 1, patrolRange: [20, canvas.width - CONFIG.BOSS_WIDTH - 20], targetY: 50, phase: 1, shotAngle: 0, lastShotTime: Date.now(), parts: [] }; parts.forEach(p => { boss.parts.push({ ...p, health: 50 + (bossCount * 25), maxHealth: 50 + (bossCount * 25), destroyed: false, lastShotTime: 0, shootCooldown: 1200 - (bossCount * 100) }); }); }
+    function updateBoss(now) { if (!boss) return; if (boss.y < boss.targetY) { boss.y += boss.vy; } else { boss.x += boss.vx; if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) { boss.vx *= -1; } } if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; } if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; } if (boss.phase === 1) { boss.parts.forEach(part => { if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) { part.lastShotTime = now; const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x))); enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 }); } }); } else { const cooldown = (boss.phase === 3) ? 700 - (bossCount * 50) : 1000 - (bossCount * 50); if (now - boss.lastShotTime > cooldown) { boss.lastShotTime = now; boss.shotAngle += 0.2; for (let i = 0; i < 6; i++) { const angle = boss.shotAngle + (i * Math.PI / 3); enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } if (boss.phase === 3) { const angleToPlayer = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2)); for (let i = -1; i <= 1; i++) { enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 7, height: 20, vx: Math.cos(angleToPlayer + i * 0.15) * 3, vy: Math.sin(angleToPlayer + i * 0.15) * 3 }); } } } } }
+
+    function fireProjectiles() { const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y, d = player.damage; const p = { s, damage: d, health: 1 }; switch (player.shotCount) { case 2: projectiles.push({ ...p, x: x - 10, y, w: 5, h: 20 }); projectiles.push({ ...p, x: x + 5, y, w: 5, h: 20 }); break; case 3: projectiles.push({ ...p, x: x - 5, y, w: 6, h: 18 }); projectiles.push({ ...p, x: x - 15, y, w: 6, h: 18, vx: -0.5 }); projectiles.push({ ...p, x: x + 5, y, w: 6, h: 18, vx: 0.5 }); break; case 4: projectiles.push({ ...p, x: x - 18, y, w: 7, h: 16, vx: -0.2 }); projectiles.push({ ...p, x: x - 6, y, w: 7, h: 16, vx: 0.2 }); projectiles.push({ ...p, x: x + 6, y, w: 7, h: 16, vx: -0.2 }); projectiles.push({ ...p, x: x + 18, y, w: 7, h: 16, vx: 0.2 }); break; case 5: projectiles.push({ ...p, x: x - 5, y, w: 8, h: 15 }); projectiles.push({ ...p, x: x - 25, y, w: 8, h: 15, vx: -0.8 }); projectiles.push({ ...p, x: x - 10, y, w: 8, h: 15, vx: -0.3 }); projectiles.push({ ...p, x: x + 2, y, w: 8, h: 15, vx: 0.3 }); projectiles.push({ ...p, x: x + 17, y, w: 8, h: 15, vx: 0.8 }); break; } }
+    function fireSuperWeapon() { enemies.forEach(e => { score += 100; playerCurrency += 100; }); enemies = []; enemyProjectiles = []; }
+    
+    function spawnPowerup(x, y) { const dropPowerup = (type, px, py) => powerups.push({ x: px, y: py, width: 30, height: 30, type, speed: 2 }); let dropped = 0; const dropX = x - 15; if (Math.random() <= 0.05) { dropPowerup('shotSpeed', dropX + (dropped * 35), y); dropped++; } if (Math.random() <= 0.05) { dropPowerup('health', dropX + (dropped * 35), y); } }
+    function applyPowerup(type) { if (type === 'shotSpeed') player.projectileSpeed = Math.min(14, player.projectileSpeed + 0.5); if (type === 'health') player.health = Math.min(player.maxHealth, player.health + 1); }
+
+    function checkCollisions() {
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            const p = projectiles[i]; let hit = false;
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                const e = enemies[j]; if (isColliding(p, e)) { e.health -= p.damage; spawnDamageNumber(p.damage, e.x, e.y); if (e.health <= 0) { playerCurrency += 100 + wave * 5; score += 100 + wave * 5; spawnPowerup(e.x, e.y); enemies.splice(j, 1); } p.health--; if (p.health <= 0) { projectiles.splice(i, 1); hit = true; } break; }
             }
-            boss = { x: canvas.width / 2 - 100, y: -200, width: 200, height: 100, health: 150 + (bossCount * 75), maxHealth: 150 + (bossCount * 75), vy: 0.5, vx: 1, patrolRange: [20, canvas.width - 220], targetY: 50, phase: 1, shotAngle: 0, lastShotTime: Date.now(), parts };
-        }
-        function updateBoss(now) {
-            if (!boss) return;
-            if (boss.y < boss.targetY) { boss.y += boss.vy; } else { boss.x += boss.vx; if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) { boss.vx *= -1; } }
-            if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; }
-            if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; }
-            if (boss.phase === 1) {
-                boss.parts.forEach(part => {
-                    if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) {
-                        part.lastShotTime = now;
-                        const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x)));
-                        enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, speed: 2.5, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
-                    }
-                });
-            } else {
-                const cooldown = (boss.phase === 3) ? 700 - (bossCount * 50) : 1000 - (bossCount * 50);
-                if (now - boss.lastShotTime > cooldown) {
-                    boss.lastShotTime = now;
-                    boss.shotAngle += 0.2;
-                    for (let i = 0; i < 6; i++) { const angle = boss.shotAngle + (i * Math.PI / 3); enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, speed: 2, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); }
-                    if (boss.phase === 3) {
-                        const angleToPlayer = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2));
-                        for (let i = -1; i <= 1; i++) { enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 7, height: 20, speed: 3, vx: Math.cos(angleToPlayer + i * 0.15) * 3, vy: Math.sin(angleToPlayer + i * 0.15) * 3 }); }
-                    }
-                }
-            }
-        }
-        function spawnPowerup(x, y) {
-            let dropped = 0;
-            if (player.shotCount < 5 && Math.random() <= 0.05) { powerups.push({ x: x - 20 + (dropped * 20), y, width: 30, height: 30, type: 'shotCount', speed: 2 }); dropped++; }
-            if (Math.random() <= 0.05) { powerups.push({ x: x - 20 + (dropped * 20), y, width: 30, height: 30, type: 'shotSpeed', speed: 2 }); dropped++; }
-            if (Math.random() <= 0.05) { powerups.push({ x: x - 20 + (dropped * 20), y, width: 30, height: 30, type: 'health', speed: 2 }); }
-        }
-        function applyPowerup(type) {
-            if (type === 'shotCount' && player.shotCount < 5) player.shotCount++;
-            if (type === 'shotSpeed') player.projectileSpeed = Math.min(14, player.projectileSpeed + 0.5);
-            if (type === 'health') player.health = Math.min(player.maxHealth, player.health + 1);
-        }
-        
-        function checkCollisions() {
-            for (let i = projectiles.length - 1; i >= 0; i--) { for (let j = enemies.length - 1; j >= 0; j--) { if (isColliding(projectiles[i], enemies[j])) { projectiles.splice(i, 1); enemies[j].health--; if (enemies[j].health <= 0) { spawnPowerup(enemies[j].x, enemies[j].y); enemies.splice(j, 1); score += 100; } break; } } }
-            for (let i = powerups.length - 1; i >= 0; i--) { if (isColliding(player, powerups[i])) { applyPowerup(powerups[i].type); powerups.splice(i, 1); } }
+            if (hit) continue;
             if (bossActive && boss) {
-                for (let i = projectiles.length - 1; i >= 0; i--) {
-                    if (!projectiles[i]) continue;
-                    boss.parts.forEach(part => { if (!part.destroyed && isColliding(projectiles[i], { ...part, x: boss.x + part.x, y: boss.y + part.y })) { part.health--; projectiles.splice(i, 1); if (part.health <= 0) { part.destroyed = true; score += 500; } } });
-                    if (!projectiles[i]) continue;
-                    if (boss.phase > 1 && isColliding(projectiles[i], boss)) {
-                        boss.health--; projectiles.splice(i, 1);
-                        if (boss.health <= 0) {
-                            score += 5000; bossActive = false; boss = null; bossCount++;
-                            totalPausedTime += Date.now() - pauseStartTime; pauseStartTime = 0; // Despausa o tempo
-                        }
-                    }
-                }
-            }
-            // ... (resto da lógica de colisão e dano no jogador, sem alterações)
-            if (!player.isHit) {
-                const hitables = [...enemyProjectiles];
-                if (!bossActive) hitables.push(...enemies);
-                else if (boss) { hitables.push(boss); boss.parts.forEach(p => { if (!p.destroyed) hitables.push({ ...p, x: boss.x + p.x, y: boss.y + p.y }); }); }
-                for (let i = hitables.length - 1; i >= 0; i--) {
-                    if (isColliding(hitables[i], player)) {
-                        handlePlayerHit();
-                        const h = hitables[i];
-                        if (h.maxHealth !== undefined) { const index = enemies.indexOf(h); if (index > -1) enemies.splice(index, 1); } else { const index = enemyProjectiles.indexOf(h); if (index > -1) enemyProjectiles.splice(index, 1); }
-                        if (gameOver) return; break;
-                    }
-                }
+                for (const part of boss.parts) { if (!part.destroyed && isColliding(p, { ...part, x: boss.x + part.x, y: boss.y + part.y })) { part.health -= p.damage; spawnDamageNumber(p.damage, boss.x + part.x, boss.y + part.y); if (part.health <= 0) { part.destroyed = true; score += 1000; playerCurrency += 1000; } p.health--; if (p.health <= 0) { projectiles.splice(i, 1); hit = true; } break; } }
+                if (hit) continue;
+                if (boss.phase > 1 && isColliding(p, boss)) { boss.health -= p.damage; spawnDamageNumber(p.damage, boss.x + boss.width / 2, boss.y + boss.height / 2); p.health--; if (p.health <= 0) projectiles.splice(i, 1); if (boss.health <= 0) { const defeatedStage = Math.floor((wave - 1) / 10) + 1; playerUpgrades.maxUnlockedStage = Math.max(playerUpgrades.maxUnlockedStage, defeatedStage + 1); score += 10000; playerCurrency += 10000; bossActive = false; boss = null; bossCount++; startNextWave(); return; } }
             }
         }
-        
-        // --- FUNÇÕES RESTANTES (gameLoop, draw, listeners, etc) ---
-        // Nenhuma mudança significativa nas funções abaixo.
-        function updatePowerups() { powerups.forEach((p, index) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(index, 1); }); }
-        function updatePlayer(now) { if (player.isHit && now - player.lastHitTime > playerSettings.hitInvincibilityDuration) player.isHit = false; if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; } player.x = Math.max(0, Math.min(canvas.width - player.width, player.x)); player.y = Math.max(0, Math.min(canvas.height - player.height, player.y)); if ((keys.j || mouse.down) && now - playerSettings.lastShotTime > playerSettings.shootCooldown) { fireProjectiles(); playerSettings.lastShotTime = now; } if (keys.f && now - playerSettings.lastSpecialTime > playerSettings.specialCooldown) { fireSuperWeapon(); playerSettings.lastSpecialTime = now; } }
-        function fireProjectiles() { const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y; switch (player.shotCount) { case 2: projectiles.push({ x: x - 10, y, w: 5, h: 20, s }); projectiles.push({ x: x + 5, y, w: 5, h: 20, s }); break; case 3: projectiles.push({ x: x - 5, y, w: 6, h: 18, s }); projectiles.push({ x: x - 15, y, w: 6, h: 18, s, vx: -0.5 }); projectiles.push({ x: x + 5, y, w: 6, h: 18, s, vx: 0.5 }); break; case 4: projectiles.push({ x: x - 18, y, w: 7, h: 16, s, vx: -0.2 }); projectiles.push({ x: x - 6, y, w: 7, h: 16, s, vx: 0.2 }); projectiles.push({ x: x + 6, y, w: 7, h: 16, s, vx: -0.2 }); projectiles.push({ x: x + 18, y, w: 7, h: 16, s, vx: 0.2 }); break; case 5: projectiles.push({ x: x - 5, y, w: 8, h: 15, s }); projectiles.push({ x: x - 25, y, w: 8, h: 15, s, vx: -0.8 }); projectiles.push({ x: x - 10, y, w: 8, h: 15, s, vx: -0.3 }); projectiles.push({ x: x + 2, y, w: 8, h: 15, s, vx: 0.3 }); projectiles.push({ x: x + 17, y, w: 8, h: 15, s, vx: 0.8 }); break; } }
-        function fireSuperWeapon() { score += enemies.length * 50; enemies = []; enemyProjectiles = []; gameContainer.style.animation = 'flash 0.3s forwards'; setTimeout(() => gameContainer.style.animation = '', 300); }
-        document.head.insertAdjacentHTML("beforeend", `<style>@keyframes flash{0%{box-shadow:inset 0 0 0 1000px rgba(255,255,255,0.7);}100%{box-shadow:inset 0 0 0 0 rgba(255,255,255,0);}}</style>`);
-        function updateProjectiles() { projectiles.forEach((p, i) => { p.y -= p.s; if (p.vx) p.x += p.vx * (p.s / 2); if (p.y < 0 || p.x < 0 || p.x > canvas.width) projectiles.splice(i, 1); }); enemyProjectiles.forEach((p, i) => { const speed = p.speed || 0; const vy = p.vy || speed; const vx = p.vx || 0; p.y += vy; p.x += vx; if (p.y > canvas.height || p.y < -p.height || p.x < -p.width || p.x > canvas.width) enemyProjectiles.splice(i, 1); }); }
-        function handlePlayerHit() { player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) endGame(); }
-        function isColliding(r1, r2) { const p1 = { x: r1.x, y: r1.y, w: r1.w || r1.width, h: r1.h || r1.height }; const p2 = { x: r2.x, y: r2.y, w: r2.width, h: r2.height }; return p1.x < p2.x + p2.w && p1.x + p1.w > p2.x && p1.y < p2.y + p2.h && p1.y + p1.h > p2.y; }
-        function draw() { ctx.clearRect(0, 0, canvas.width, canvas.height); if (!playerImage.useFallback && playerImage.complete && playerImage.naturalHeight !== 0) { ctx.globalAlpha = player.isHit ? 0.5 : 1.0; ctx.drawImage(playerImage, player.x, player.y, player.width, player.height); ctx.globalAlpha = 1.0; } else { ctx.fillStyle = player.isHit ? '#ffffff' : '#0af'; ctx.fillRect(player.x, player.y, player.width, player.height); } ctx.fillStyle = projectileColors[player.shotCount - 2] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h)); enemies.forEach(e => { ctx.fillStyle = `rgb(255, ${Math.floor(255 * (e.health / e.maxHealth))}, ${Math.floor(255 * (e.health / e.maxHealth))})`; ctx.fillRect(e.x, e.y, e.width, e.height); }); ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height)); powerups.forEach(p => { const isHealth = p.type === 'health'; ctx.fillStyle = isHealth ? '#ff4d4d' : (p.type === 'shotCount' ? '#00FFFF' : '#FFD700'); ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#000"; ctx.font = `bold ${isHealth ? 24 : 20}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(isHealth ? '♥' : (p.type === 'shotCount' ? '+' : 'S'), p.x + p.width / 2, p.y + p.height / 2 + 2); }); if (bossActive && boss) drawBoss(); }
-        function drawBoss() { if (boss.phase === 1) ctx.fillStyle = '#8B0000'; else if (boss.phase === 2) ctx.fillStyle = (Math.floor(Date.now() / 100) % 2 ? '#ff4d4d' : '#8B0000'); else ctx.fillStyle = (Math.floor(Date.now() / 50) % 2 ? '#FF0000' : '#ff4d4d'); ctx.fillRect(boss.x, boss.y, boss.width, boss.height); boss.parts.forEach(part => { if (!part.destroyed) { ctx.fillStyle = '#6a0dad'; ctx.fillRect(boss.x + part.x, boss.y + part.y, part.width, part.height); } }); }
-        function gameLoop() { if (gameOver) return; const now = Date.now(); manageGameFlow(now); updatePlayer(now); updateProjectiles(); if(!bossActive) updateEnemies(now); updatePowerups(); checkCollisions(); updateUIDisplay(); draw(); requestAnimationFrame(gameLoop); }
-        uiElements.startBtn.addEventListener('click', initGame); uiElements.restartBtn.addEventListener('click', initGame);
-        window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; }); window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = false; });
-        canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouse.down = true; }); canvas.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; }); canvas.addEventListener('mouseleave', () => mouse.down = false);
-        if (isMobile) { document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.j = true; }); document.getElementById('shoot-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.j = false; }); document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; }); document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; }); gameContainer.addEventListener('touchstart', (e) => { const touch = e.touches[0]; if (touch.clientX < window.innerWidth / 2) { e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY; uiElements.joystickBase.style.left = `${joystick.x}px`; uiElements.joystickBase.style.top = `${joystick.y}px`; uiElements.joystickStick.style.left = `${joystick.x}px`; uiElements.joystickStick.style.top = `${joystick.y}px`; uiElements.joystickBase.classList.remove('hidden'); uiElements.joystickStick.classList.remove('hidden'); } }); gameContainer.addEventListener('touchmove', (e) => { if (!joystick.active) return; e.preventDefault(); const touch = e.touches[0]; const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y; const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx); if (distance > joystick.maxRadius) { joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle); uiElements.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`; uiElements.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`; } else { joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius; uiElements.joystickStick.style.left = `${touch.clientX}px`; uiElements.joystickStick.style.top = `${touch.clientY}px`; } }); gameContainer.addEventListener('touchend', (e) => { if (joystick.active && Array.from(e.changedTouches).some(t => t.clientX < window.innerWidth / 2)) { joystick.active = false; joystick.dx = 0; joystick.dy = 0; uiElements.joystickBase.classList.add('hidden'); uiElements.joystickStick.classList.add('hidden'); } }); }
-    };
-    </script>
+        for (let i = homingMissiles.length - 1; i >= 0; i--) { const m = homingMissiles[i]; let hit = false; for (let j = enemies.length - 1; j >= 0; j--) { const e = enemies[j]; if (isColliding(m, e)) { e.health -= m.damage; spawnDamageNumber(m.damage, e.x, e.y, '#87CEEB'); if (e.health <= 0) { playerCurrency += 100 + wave * 5; score += 100 + wave * 5; enemies.splice(j, 1); } homingMissiles.splice(i, 1); hit = true; break; } } if (hit) continue; }
+        for (let i = powerups.length - 1; i >= 0; i--) { if (isColliding(player, powerups[i])) { applyPowerup(powerups[i].type); powerups.splice(i, 1); } }
+        if (!player.isHit) { const hitables = [...enemyProjectiles, ...enemies]; if (bossActive && boss) { hitables.push(boss); boss.parts.forEach(p => { if (!p.destroyed) hitables.push({ ...p, x: boss.x + p.x, y: boss.y + p.y }); }); } for (let i = hitables.length - 1; i >= 0; i--) { if (isColliding(hitables[i], player)) { handlePlayerHit(); const h = hitables[i]; if (h.maxHealth !== undefined) { const index = enemies.indexOf(h); if (index > -1) enemies.splice(index, 1); } else { const index = enemyProjectiles.indexOf(h); if (index > -1) enemyProjectiles.splice(index, 1); } if (gameOver) return; break; } } }
+    }
+    
+    function updateEntities(now) {
+        updatePlayer(now);
+        projectiles.forEach((p, i) => { p.y -= p.s; if (p.vx) p.x += p.vx * (p.s / 2); if (p.y < 0 || p.x < 0 || p.x > canvas.width) projectiles.splice(i, 1); });
+        enemyProjectiles.forEach((p, i) => { const vy = p.vy || 0, vx = p.vx || 0; p.y += vy; p.x += vx; if (p.y > canvas.height || p.y < -p.height || p.x < -p.width || p.x > canvas.width) enemyProjectiles.splice(i, 1); });
+        powerups.forEach((p, i) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(i, 1); });
+        damageNumbers.forEach((dn, i) => { dn.y += dn.vy; dn.life--; if (dn.life <= 0) damageNumbers.splice(i, 1); });
+        drones.forEach(d => {
+            const targetX = player.x + (d.side === 'left' ? -40 : player.width + 10);
+            d.x += (targetX - d.x) * 0.1; d.y += (player.y - d.y) * 0.1;
+            if(now - d.lastShotTime > player.fireRate * 3 && (enemies.length > 0 || bossActive)) {
+                let closest = null, minDist = Infinity;
+                const targets = [...enemies, ...(boss ? [boss, ...boss.parts.filter(part => !part.destroyed)] : [])];
+                targets.forEach(e => {
+                    const e_x = e.parts ? e.x + e.width / 2 : e.x; const e_y = e.parts ? e.y + e.height / 2 : e.y;
+                    const dx = e_x - d.x, dy = e_y - d.y, dist = dx * dx + dy * dy;
+                    if(dist < minDist) { minDist = dist; closest = e; }
+                });
+                if(closest) { homingMissiles.push({ x: d.x, y: d.y, w: 8, h: 8, speed: 4, target: closest, damage: player.damage / 2, turnSpeed: 0.1 }); d.lastShotTime = now; }
+            }
+        });
+        homingMissiles.forEach((m, i) => {
+            if (m.target && m.target.health > 0) {
+                const targetX = m.target.x + (m.target.width / 2); const targetY = m.target.y + (m.target.height / 2);
+                const angleToTarget = Math.atan2(targetY - m.y, targetX - m.x);
+                let currentAngle = Math.atan2(m.vy || 0, m.vx || 1);
+                let angleDiff = angleToTarget - currentAngle;
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI; while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                const newAngle = currentAngle + Math.sign(angleDiff) * Math.min(Math.abs(angleDiff), m.turnSpeed);
+                m.vx = Math.cos(newAngle) * m.speed; m.vy = Math.sin(newAngle) * m.speed;
+            } else { m.vy = (m.vy || -m.speed); m.vx = (m.vx || 0); }
+            m.x += m.vx; m.y += m.vy;
+            if (m.x < 0 || m.x > canvas.width || m.y < 0 || m.y > canvas.height) homingMissiles.splice(i, 1);
+        });
+        if(bossActive) updateBoss(now); else { enemies.forEach((enemy, index) => { enemy.y += enemy.vy; if (enemy.y > canvas.height) { enemies.splice(index, 1); } else if (now - enemy.lastShotTime > enemy.shootCooldown) { enemyShootingPatterns[enemy.shootPattern](enemy); enemy.lastShotTime = now; } }); }
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (player.hasShield && player.shieldActive) { ctx.beginPath(); ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width / 2 + 10, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(0, 191, 255, 0.7)'; ctx.lineWidth = 3; ctx.stroke(); }
+        ctx.globalAlpha = player.isHit ? 0.5 : 1.0; ctx.drawImage(assets.player, player.x, player.y, player.width, player.height); ctx.globalAlpha = 1.0;
+        const projectileColors = ['#00FF00', '#00FFFF', '#FFFF00', '#FF00FF']; ctx.fillStyle = projectileColors[player.shotCount - 2] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+        enemies.forEach(e => { const hp = e.health / e.maxHealth; ctx.fillStyle = '#f00'; ctx.fillRect(e.x, e.y - 10, e.width, 5); ctx.fillStyle = '#0f0'; ctx.fillRect(e.x, e.y - 10, e.width * hp, 5); ctx.drawImage(assets.enemy1, e.x, e.y, e.width, e.height); });
+        ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+        drones.forEach(d => { ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.arc(d.x, d.y, 8, 0, Math.PI*2); ctx.fill(); });
+        ctx.fillStyle = '#0f0'; homingMissiles.forEach(m => { ctx.beginPath(); ctx.arc(m.x, m.y, 4, 0, Math.PI*2); ctx.fill(); });
+        powerups.forEach(p => { const isHealth = p.type === 'health'; ctx.fillStyle = isHealth ? '#ff4d4d' : '#FFD700'; ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#000"; ctx.font = `bold 24px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(isHealth ? '♥' : 'S', p.x + p.width / 2, p.y + p.height / 2 + 2); });
+        if (bossActive && boss) drawBoss();
+        ctx.font = 'bold 14px Arial'; damageNumbers.forEach(dn => { ctx.globalAlpha = dn.life / 60; ctx.fillStyle = dn.color; ctx.fillText(dn.text, dn.x, dn.y); }); ctx.globalAlpha = 1.0;
+    }
+    function drawBoss() { if (!boss) return; const drawHB = (t, yOff = -15) => { const p = t.health / t.maxHealth; ctx.fillStyle = '#500'; ctx.fillRect(t.x, t.y + yOff, t.width, 8); ctx.fillStyle = '#f00'; ctx.fillRect(t.x, t.y + yOff, t.width * p, 8); }; drawHB(boss); ctx.drawImage(assets.boss, boss.x, boss.y, boss.width, boss.height); boss.parts.forEach(part => { if (!part.destroyed) { drawHB({ ...part, x: boss.x + part.x, y: boss.y + part.y }, -10); ctx.drawImage(assets.bossWeapon, boss.x + part.x, boss.y + part.y, part.width, part.height); } }); }
+    function isColliding(r1, r2) { const p1 = { x: r1.x, y: r1.y, w: r1.w || r1.width, h: r1.h || r1.height }; const p2 = { x: r2.x, y: r2.y, w: r2.width, h: r2.height }; return p1.x < p2.x + p2.w && p1.x + p1.w > p2.x && p1.y < p2.y + p2.h && p1.y + p1.h > p2.y; }
+
+    function gameLoop() {
+        if (!gameStarted) return;
+        if (gameOver) { saveData(); ui.finalScoreDisplay.textContent = score.toLocaleString('pt-BR'); ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); ui.gameOverScreen.classList.remove('hidden'); gameStarted = false; return; }
+        if (isPaused) { requestAnimationFrame(gameLoop); return; }
+        const now = Date.now();
+        if (!bossActive && enemies.length === 0) startNextWave();
+        updateEntities(now);
+        checkCollisions();
+        updateUIDisplay();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // --- INICIALIZAÇÃO & LISTENERS ---
+    loadData();
+    loadAssets().then(() => { ui.loadingText.style.display = 'none'; ui.startBtn.disabled = false; }).catch(error => { console.error("Erro no carregamento de assets:", error); ui.loadingText.textContent = "Erro ao carregar!"; });
+    ui.startBtn.addEventListener('click', showStageSelect);
+    ui.upgradesBtn.addEventListener('click', showUpgradeStore);
+    ui.resetDataBtn.addEventListener('click', resetData);
+    ui.backToMenuFromStageSelectBtn.addEventListener('click', showMainMenu);
+    ui.backToMenuBtn.addEventListener('click', showMainMenu);
+    ui.confirmStageBtn.addEventListener('click', () => initGame((selectedStageIndex * 10) + 1));
+    ui.prevStageBtn.addEventListener('click', () => { if (selectedStageIndex > 0) { selectedStageIndex--; updateStageSelectorDisplay(); } });
+    ui.nextStageBtn.addEventListener('click', () => { if (selectedStageIndex < playerUpgrades.maxUnlockedStage - 1) { selectedStageIndex++; updateStageSelectorDisplay(); } });
+    ui.restartBtn.addEventListener('click', showStageSelect);
+    ui.gameOverToMenuBtn.addEventListener('click', showMainMenu);
+    ui.continueBtn.addEventListener('click', togglePause);
+    ui.pauseToMenuBtn.addEventListener('click', endGameAndGoToMenu);
+
+    window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; if(e.key === 'Escape' && gameStarted && !gameOver) togglePause(); });
+    window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = false; });
+    document.addEventListener('mousedown', (e) => { if (e.target === canvas && e.button === 0) mouse.down = true; });
+    document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
+    document.addEventListener('mouseleave', () => mouse.down = false);
+    if (isMobile) {
+        document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); mouse.down = true; }, { passive: false });
+        document.getElementById('shoot-btn').addEventListener('touchend', (e) => { e.preventDefault(); mouse.down = false; });
+        document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; }, { passive: false });
+        document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
+        document.addEventListener('touchstart', (e) => { const touch = e.touches[0]; if (touch.clientX < window.innerWidth / 2) { e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY; ui.joystickBase.style.left = `${joystick.x}px`; ui.joystickBase.style.top = `${joystick.y}px`; ui.joystickStick.style.left = `${joystick.x}px`; ui.joystickStick.style.top = `${joystick.y}px`; ui.joystickBase.classList.remove('hidden'); ui.joystickStick.classList.remove('hidden'); } }, { passive: false });
+        document.addEventListener('touchmove', (e) => { if (!joystick.active) return; e.preventDefault(); const touch = e.touches[0]; const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y; const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx); if (distance > joystick.maxRadius) { joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle); ui.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`; ui.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`; } else { joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius; ui.joystickStick.style.left = `${touch.clientX}px`; ui.joystickStick.style.top = `${touch.clientY}px`; } }, { passive: false });
+        document.addEventListener('touchend', (e) => { let wasJoystick = false; for(let i = 0; i < e.changedTouches.length; i++) { if(e.changedTouches[i].clientX < window.innerWidth / 2) wasJoystick = true; } if (joystick.active && wasJoystick) { joystick.active = false; joystick.dx = 0; joystick.dy = 0; ui.joystickBase.classList.add('hidden'); ui.joystickStick.classList.add('hidden'); } });
+    }
+};
+</script>
 </body>
 </html>
