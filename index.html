@@ -6,422 +6,259 @@
     <title>Aero Fighter Clone</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
-        body {
-            font-family: 'Arial', sans-serif; background-color: #111; color: #fff;
-            display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; overflow: hidden;
-        }
-        #game-container {
-            position: relative; aspect-ratio: 9 / 14; height: 95vh;
-            max-height: 95vh; width: calc(95vh * (9 / 14)); max-width: 100vw;
-            background-color: #000; overflow: hidden; border: 2px solid #333; cursor: crosshair;
-        }
-        canvas {
-            width: 100%; height: 100%; display: block;
-            background-image:
-                radial-gradient(white 1px, transparent 0), radial-gradient(white 1px, transparent 0);
-            background-size: 40px 40px, 40px 40px; background-position: 0 0, 20px 20px;
-            animation: scroll-background 10s linear infinite;
-        }
+        body { font-family: 'Arial', sans-serif; background-color: #111; color: #fff; display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; overflow: hidden; }
+        #game-container { position: relative; aspect-ratio: 9 / 14; height: 95vh; max-height: 95vh; width: calc(95vh * (9 / 14)); max-width: 100vw; background-color: #000; overflow: hidden; border: 2px solid #333; cursor: crosshair; }
+        canvas { width: 100%; height: 100%; display: block; background-image: radial-gradient(white 1px, transparent 0), radial-gradient(white 1px, transparent 0); background-size: 40px 40px, 40px 40px; background-position: 0 0, 20px 20px; animation: scroll-background 10s linear infinite; }
         @keyframes scroll-background { from { background-position-y: 0px; } to { background-position-y: 400px; } }
-
-        .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center; padding: 20px;
-        }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
         .overlay h1 { font-size: 2.5em; margin-bottom: 20px; text-shadow: 0 0 10px #0ff; }
         .overlay p { font-size: 1.2em; margin-bottom: 30px; }
-        .button {
-            padding: 15px 30px; font-size: 1.5em; background-color: #0af; border: none;
-            color: #fff; cursor: pointer; border-radius: 5px; transition: background-color 0.3s;
-        }
+        .button { padding: 15px 30px; font-size: 1.5em; background-color: #0af; border: none; color: #fff; cursor: pointer; border-radius: 5px; transition: background-color 0.3s; }
         .button:hover { background-color: #08d; }
-        #game-ui {
-            position: absolute; top: 10px; left: 10px; right: 10px; font-size: 1.2em;
-            text-shadow: 1px 1px 2px #000; display: flex; flex-direction: column; gap: 8px;
-        }
+        #game-ui { position: absolute; top: 10px; left: 10px; right: 10px; font-size: 1.2em; text-shadow: 1px 1px 2px #000; display: flex; flex-direction: column; gap: 8px; }
         #ui-top-row { display: flex; justify-content: space-between; }
         .health-bar-container { width: 120px; height: 20px; background-color: #555; border: 1px solid #fff; border-radius: 5px; overflow: hidden; }
         .health-bar-fill { width: 100%; height: 100%; background-color: #4caf50; transition: width 0.2s linear; }
-        
-        #action-buttons {
-            position: absolute; bottom: 20px; right: 20px; display: flex;
-            flex-direction: column; gap: 15px; pointer-events: all;
-        }
-        .action-btn {
-            width: 75px; height: 75px; border-radius: 50%; background-color: rgba(255, 80, 80, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: center;
-            align-items: center; font-size: 1.1em; color: #fff; font-weight: bold;
-        }
+        #action-buttons { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 15px; pointer-events: all; }
+        .action-btn { width: 75px; height: 75px; border-radius: 50%; background-color: rgba(255, 80, 80, 0.5); border: 2px solid rgba(255, 255, 255, 0.5); display: flex; justify-content: center; align-items: center; font-size: 1.1em; color: #fff; font-weight: bold; }
         .action-btn:active { background-color: rgba(255, 80, 80, 0.8); }
         #special-btn { background-color: rgba(80, 80, 255, 0.5); }
         #special-btn:active { background-color: rgba(80, 80, 255, 0.8); }
-        
-        /* --- JOYSTICK VIRTUAL --- */
-        #joystick-base {
-            position: absolute; width: 120px; height: 120px;
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            transform: translate(-50%, -50%); /* Centraliza no ponto de toque */
-        }
-        #joystick-stick {
-            position: absolute; width: 60px; height: 60px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%); /* Centraliza no ponto de toque */
-        }
+        #joystick-base { position: absolute; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border-radius: 50%; transform: translate(-50%, -50%); }
+        #joystick-stick { position: absolute; width: 60px; height: 60px; background-color: rgba(255, 255, 255, 0.3); border-radius: 50%; transform: translate(-50%, -50%); }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
-        <!-- Menus -->
-        <div id="main-menu" class="overlay">
-            <h1>Aero Fighter</h1><p>Maior Pontuação: <span id="high-score-display">0</span></p>
-            <button id="start-btn" class="button">Iniciar Jogo</button>
-        </div>
-        <div id="game-over-screen" class="overlay hidden">
-             <h1>Fim de Jogo</h1><p>Sua pontuação: <span id="final-score">0</span></p>
-            <button id="restart-btn" class="button">Jogar Novamente</button>
-        </div>
-        <!-- UI do Jogo -->
-        <div id="game-ui" class="hidden">
-            <div id="ui-top-row"><span id="score">Pontos: 0</span><span id="time">Tempo: 0s</span></div>
-            <div class="health-bar-container"><div id="health-bar" class="health-bar-fill"></div></div>
-        </div>
-        <!-- Controles Virtuais -->
-        <div id="virtual-controls">
-            <div id="joystick-base" class="hidden"></div>
-            <div id="joystick-stick" class="hidden"></div>
-            <div id="action-buttons" class="hidden">
-                 <button id="special-btn" class="action-btn">Especial</button>
-                 <button id="shoot-btn" class="action-btn">Atirar</button>
-            </div>
-        </div>
+        <div id="main-menu" class="overlay"><p style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando...</p><h1>Aero Fighter</h1><p>Maior Pontuação: <span id="high-score-display">0</span></p><button id="start-btn" class="button" disabled>Iniciar Jogo</button></div>
+        <div id="game-over-screen" class="overlay hidden"><h1>Fim de Jogo</h1><p>Sua pontuação: <span id="final-score">0</span></p><button id="restart-btn" class="button">Jogar Novamente</button></div>
+        <div id="game-ui" class="hidden"><div id="ui-top-row"><span id="score">Pontos: 0</span><span id="time">Tempo: 0s</span></div><div class="health-bar-container"><div id="health-bar" class="health-bar-fill"></div></div></div>
+        <div id="virtual-controls"><div id="joystick-base" class="hidden"></div><div id="joystick-stick" class="hidden"></div><div id="action-buttons" class="hidden"><button id="special-btn" class="action-btn">Especial</button><button id="shoot-btn" class="action-btn">Atirar</button></div></div>
     </div>
-
     <script>
-        window.onload = function() {
-            // --- SETUP INICIAL ---
-            const canvas = document.getElementById('gameCanvas');
-            const ctx = canvas.getContext('2d');
-            const gameContainer = document.getElementById('game-container');
-            const uiElements = {
-                mainMenu: document.getElementById('main-menu'), gameUI: document.getElementById('game-ui'),
-                gameOverScreen: document.getElementById('game-over-screen'),
-                virtualControls: document.getElementById('virtual-controls'),
-                actionButtons: document.getElementById('action-buttons'),
-                joystickBase: document.getElementById('joystick-base'), joystickStick: document.getElementById('joystick-stick'),
-                startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn'),
-                scoreDisplay: document.getElementById('score'), timeDisplay: document.getElementById('time'),
-                finalScoreDisplay: document.getElementById('final-score'), highScoreDisplay: document.getElementById('high-score-display'),
-                healthBarFill: document.getElementById('health-bar')
-            };
-            
-            canvas.width = 450; canvas.height = 700; // Resolução interna
-            const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
-
-            // --- ESTADO DO JOGO ---
-            let gameStarted, gameOver, score, gameStartTime, lastSpawnTime, spawnCooldown;
-            let highScore = localStorage.getItem('aeroFighterHighScore') || 0;
-            uiElements.highScoreDisplay.textContent = highScore;
-
-            // --- OBJETOS DO JOGO ---
-            let player, projectiles, enemies, enemyProjectiles, powerups;
-            
-            const keys = { w: false, a: false, s: false, d: false, j: false, f: false };
-            const mouse = { down: false };
-            const joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
-
-            const playerSettings = {
-                width: 45, height: 45, speed: 4, maxHealth: 10,
-                shootCooldown: 200, lastShotTime: 0,
-                specialCooldown: 15000, lastSpecialTime: -15000,
-                hitInvincibilityDuration: 300
-            };
-            const projectileColors = ['#00FF00', '#00FFFF', '#FFFF00', '#FF00FF'];
-
-            // --- FUNÇÕES DE CONTROLE DO JOGO ---
-            function initGame() {
-                uiElements.mainMenu.classList.add('hidden');
-                uiElements.gameOverScreen.classList.add('hidden');
-                uiElements.gameUI.classList.remove('hidden');
-                if (isMobile) uiElements.actionButtons.classList.remove('hidden');
-
-                gameStarted = true; gameOver = false; score = 0;
-                gameStartTime = Date.now(); lastSpawnTime = Date.now(); spawnCooldown = 2000;
-
-                projectiles = []; enemies = []; enemyProjectiles = []; powerups = [];
-                
-                player = {
-                    x: canvas.width / 2 - playerSettings.width / 2, y: canvas.height - 100,
-                    width: playerSettings.width, height: playerSettings.height, speed: playerSettings.speed,
-                    health: playerSettings.maxHealth, isHit: false, lastHitTime: 0,
-                    shotCount: 2, projectileSpeed: 8
-                };
-                
-                updateUIDisplay();
-                gameLoop();
+    window.onload = function() {
+        const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d'), gameContainer = document.getElementById('game-container');
+        const uiElements = { mainMenu: document.getElementById('main-menu'), gameUI: document.getElementById('game-ui'), gameOverScreen: document.getElementById('game-over-screen'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.getElementById('joystick-base'), joystickStick: document.getElementById('joystick-stick'), startBtn: document.getElementById('start-btn'), restartBtn: document.getElementById('restart-btn'), scoreDisplay: document.getElementById('score'), timeDisplay: document.getElementById('time'), finalScoreDisplay: document.getElementById('final-score'), highScoreDisplay: document.getElementById('high-score-display'), healthBarFill: document.getElementById('health-bar') };
+        canvas.width = 450; canvas.height = 700;
+        const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+        const playerImage = new Image();
+        playerImage.src = 'navep1.png';
+        playerImage.onload = () => { uiElements.startBtn.disabled = false; uiElements.mainMenu.querySelector('p').style.display = 'none'; };
+        playerImage.onerror = () => { console.log("Erro ao carregar navep1.png. Usando quadrado azul."); playerImage.useFallback = true; uiElements.startBtn.disabled = false; uiElements.mainMenu.querySelector('p').style.display = 'none'; };
+        let gameStarted, gameOver, score, gameStartTime, lastSpawnTime, spawnCooldown, lastHealthUpgradeTime;
+        let highScore = localStorage.getItem('aeroFighterHighScore') || 0;
+        uiElements.highScoreDisplay.textContent = highScore;
+        let player, projectiles, enemies, enemyProjectiles, powerups, boss;
+        let bossSpawned = false, bossActive = false;
+        const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
+        const playerSettings = { width: 50, height: 50, speed: 4, initialMaxHealth: 10, shootCooldown: 200, lastShotTime: 0, specialCooldown: 15000, lastSpecialTime: -15000, hitInvincibilityDuration: 300 };
+        const projectileColors = ['#00FF00', '#00FFFF', '#FFFF00', '#FF00FF'];
+        function initGame() {
+            uiElements.mainMenu.classList.add('hidden'); uiElements.gameOverScreen.classList.add('hidden'); uiElements.gameUI.classList.remove('hidden'); if (isMobile) uiElements.actionButtons.classList.remove('hidden');
+            gameStarted = true; gameOver = false; score = 0;
+            gameStartTime = Date.now(); lastSpawnTime = Date.now(); lastHealthUpgradeTime = gameStartTime;
+            spawnCooldown = 2000; bossSpawned = false; bossActive = false;
+            projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; boss = null;
+            player = { x: canvas.width / 2 - playerSettings.width / 2, y: canvas.height - 100, width: playerSettings.width, height: playerSettings.height, speed: playerSettings.speed, maxHealth: playerSettings.initialMaxHealth, health: playerSettings.initialMaxHealth, isHit: false, lastHitTime: 0, shotCount: 2, projectileSpeed: 8 };
+            updateUIDisplay(); gameLoop();
+        }
+        function endGame() {
+            gameOver = true; gameStarted = false;
+            uiElements.gameUI.classList.add('hidden');
+            if (isMobile) { uiElements.actionButtons.classList.add('hidden'); uiElements.joystickBase.classList.add('hidden'); uiElements.joystickStick.classList.add('hidden'); }
+            uiElements.gameOverScreen.classList.remove('hidden');
+            uiElements.finalScoreDisplay.textContent = score;
+            if (score > highScore) { highScore = score; localStorage.setItem('aeroFighterHighScore', highScore); uiElements.highScoreDisplay.textContent = highScore; }
+        }
+        function updateUIDisplay() {
+            const elapsedTime = Math.floor((Date.now() - gameStartTime) / 1000);
+            uiElements.scoreDisplay.textContent = `Pontos: ${score}`;
+            uiElements.timeDisplay.textContent = `Tempo: ${elapsedTime}s`;
+            const healthPercentage = (player.health / player.maxHealth) * 100;
+            uiElements.healthBarFill.style.width = `${healthPercentage}%`;
+        }
+        function manageGameFlow(now) {
+            const elapsedTimeInSeconds = (now - gameStartTime) / 1000;
+            if (now - lastHealthUpgradeTime > 30000) { lastHealthUpgradeTime = now; player.maxHealth++; player.health++; }
+            if (!bossSpawned && elapsedTimeInSeconds > 60) { bossSpawned = true; bossActive = true; enemies = []; spawnBoss(); }
+            if (bossActive) updateBoss(now); else spawnEnemies(now, elapsedTimeInSeconds);
+        }
+        function spawnEnemies(now, elapsedTimeInSeconds) {
+            if (enemies.length >= 10) return;
+            spawnCooldown = Math.max(300, 2000 - elapsedTimeInSeconds * 20);
+            if (now - lastSpawnTime > spawnCooldown) {
+                lastSpawnTime = now;
+                const health = 1 + Math.floor(elapsedTimeInSeconds / 30);
+                const initialX = Math.random() * (canvas.width - 40);
+                let pattern = 'single';
+                if (elapsedTimeInSeconds > 60) pattern = Math.random() < 0.3 ? 'burst' : (Math.random() < 0.5 ? 'spread' : 'single'); else if (elapsedTimeInSeconds > 25) pattern = Math.random() < 0.4 ? 'spread' : 'single';
+                enemies.push({ x: initialX, y: -50, initialX, width: 40, height: 40, health: health, maxHealth: health, vy: 0.8 + Math.random() * 0.5, waveAmplitude: 30 + Math.random() * 40, waveFrequency: 800 + Math.random() * 400, shootPattern: pattern, shootCooldown: 2500 - (elapsedTimeInSeconds * 10), lastShotTime: now });
             }
-
-            function endGame() {
-                gameOver = true; gameStarted = false;
-                uiElements.gameUI.classList.add('hidden');
-                if (isMobile) {
-                    uiElements.actionButtons.classList.add('hidden');
-                    uiElements.joystickBase.classList.add('hidden');
-                    uiElements.joystickStick.classList.add('hidden');
-                }
-                uiElements.gameOverScreen.classList.remove('hidden');
-                uiElements.finalScoreDisplay.textContent = score;
-                
-                if (score > highScore) {
-                    highScore = score;
-                    localStorage.setItem('aeroFighterHighScore', highScore);
-                    uiElements.highScoreDisplay.textContent = highScore;
-                }
-            }
-            
-            function updateUIDisplay() {
-                const elapsedTime = Math.floor((Date.now() - gameStartTime) / 1000);
-                uiElements.scoreDisplay.textContent = `Pontos: ${score}`;
-                uiElements.timeDisplay.textContent = `Tempo: ${elapsedTime}s`;
-                const healthPercentage = (player.health / playerSettings.maxHealth) * 100;
-                uiElements.healthBarFill.style.width = `${healthPercentage}%`;
-            }
-            
-            // --- LÓGICA DE DIFICULDADE E INIMIGOS ---
-            function spawnEnemies() {
-                const now = Date.now();
-                if (enemies.length >= 10) return; // Limite de inimigos na tela
-                
-                const elapsedTimeInSeconds = (now - gameStartTime) / 1000;
-                spawnCooldown = Math.max(300, 2000 - elapsedTimeInSeconds * 20);
-
-                if (now - lastSpawnTime > spawnCooldown) {
-                    lastSpawnTime = now;
-                    const health = 1 + Math.floor(elapsedTimeInSeconds / 30); // Vida escala mais devagar
-                    let pattern = 'single';
-                    if (elapsedTimeInSeconds > 60) pattern = Math.random() < 0.3 ? 'burst' : (Math.random() < 0.5 ? 'spread' : 'single');
-                    else if (elapsedTimeInSeconds > 25) pattern = Math.random() < 0.4 ? 'spread' : 'single';
-                    
-                    const initialX = Math.random() * (canvas.width - 40);
-                    enemies.push({
-                        x: initialX, y: -50, initialX,
-                        width: 40, height: 40, health: health, maxHealth: health,
-                        vy: 0.8 + Math.random() * 0.5, // Velocidade vertical constante
-                        waveAmplitude: 30 + Math.random() * 40, // Amplitude da ondulação
-                        waveFrequency: 800 + Math.random() * 400, // Frequencia da ondulação
-                        shootPattern: pattern, shootCooldown: 2500 - (elapsedTimeInSeconds * 10), lastShotTime: now
-                    });
-                }
-            }
-
-            const enemyShootingPatterns = {
-                single: (enemy) => {
-                    enemyProjectiles.push({ x: enemy.x + enemy.width / 2 - 2.5, y: enemy.y + enemy.height, width: 5, height: 15, speed: 2 });
-                },
-                spread: (enemy) => {
-                    enemyProjectiles.push({ x: enemy.x + enemy.width / 2 - 4, y: enemy.y + enemy.height, width: 8, height: 8, speed: 1.75, vx: -0.5 });
-                    enemyProjectiles.push({ x: enemy.x + enemy.width / 2 - 4, y: enemy.y + enemy.height, width: 8, height: 8, speed: 1.75, vx: 0.5 });
-                },
-                burst: (enemy) => {
-                     enemyProjectiles.push({ x: enemy.x + enemy.width / 2 - 2.5, y: enemy.y + enemy.height, width: 5, height: 10, speed: 2.5 });
-                     setTimeout(() => { if (enemies.includes(enemy)) {
-                         enemyProjectiles.push({ x: enemy.x + enemy.width / 2 - 2.5, y: enemy.y + enemy.height, width: 5, height: 10, speed: 2.5 });
-                     }}, 150);
-                }
-            };
-            
-            function updateEnemies(now) {
-                enemies.forEach(enemy => {
-                    enemy.y += enemy.vy;
-                    enemy.x = enemy.initialX + Math.sin(now / enemy.waveFrequency) * enemy.waveAmplitude;
-
-                    if (enemy.x < 0) enemy.initialX += 1;
-                    if (enemy.x > canvas.width - enemy.width) enemy.initialX -= 1;
-
-                    if (now - enemy.lastShotTime > enemy.shootCooldown) {
-                        if (Math.random() < 0.5) enemyShootingPatterns[enemy.shootPattern](enemy);
-                        enemy.lastShotTime = now;
-                    }
-                    if (enemy.y > canvas.height) enemies.splice(enemies.indexOf(enemy), 1);
-                });
-            }
-
-            // --- POWER-UPS ---
-            function spawnPowerup(x, y) {
-                if (Math.random() > 0.08) return; // Chance de 8% para dropar
-                const type = Math.random() > 0.4 ? 'shotCount' : 'shotSpeed';
-                powerups.push({ x, y, width: 30, height: 30, type, speed: 2 });
-            }
-
-            function updatePowerups() { powerups.forEach((p, index) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(index, 1); }); }
-            function applyPowerup(type) {
-                if (type === 'shotCount' && player.shotCount < 5) player.shotCount++;
-                if (type === 'shotSpeed') player.projectileSpeed = Math.min(14, player.projectileSpeed + 0.5);
-            }
-
-            // --- LÓGICA DO JOGADOR ---
-            function updatePlayer(now) {
-                if (player.isHit && now - player.lastHitTime > playerSettings.hitInvincibilityDuration) player.isHit = false;
-                
-                // Movimento
-                if (isMobile && joystick.active) {
-                    player.x += joystick.dx * player.speed;
-                    player.y += joystick.dy * player.speed;
-                } else {
-                    if (keys.w) player.y -= player.speed;
-                    if (keys.s) player.y += player.speed;
-                    if (keys.a) player.x -= player.speed;
-                    if (keys.d) player.x += player.speed;
-                }
-                // Limitar à tela
-                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-                player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
-
-                // Ação
-                if ((keys.j || mouse.down) && now - playerSettings.lastShotTime > playerSettings.shootCooldown) {
-                    fireProjectiles(); playerSettings.lastShotTime = now;
-                }
-                if (keys.f && now - playerSettings.lastSpecialTime > playerSettings.specialCooldown) {
-                    fireSuperWeapon(); playerSettings.lastSpecialTime = now;
-                }
-            }
-
-            function fireProjectiles() {
-                const s = player.projectileSpeed; const x = player.x + player.width / 2; const y = player.y;
-                switch (player.shotCount) {
-                    case 2: projectiles.push({ x: x - 10, y, w: 5, h: 20, s }); projectiles.push({ x: x + 5, y, w: 5, h: 20, s }); break;
-                    case 3: projectiles.push({ x: x - 5, y, w: 6, h: 18, s }); projectiles.push({ x: x - 15, y, w: 6, h: 18, s, vx: -0.5 }); projectiles.push({ x: x + 5, y, w: 6, h: 18, s, vx: 0.5 }); break;
-                    case 4: projectiles.push({ x: x - 18, y, w: 7, h: 16, s, vx: -0.2 }); projectiles.push({ x: x - 6, y, w: 7, h: 16, s, vx: 0.2 }); projectiles.push({ x: x + 6, y, w: 7, h: 16, s, vx: -0.2 }); projectiles.push({ x: x + 18, y, w: 7, h: 16, s, vx: 0.2 }); break;
-                    case 5: projectiles.push({ x: x - 5, y, w: 8, h: 15, s }); projectiles.push({ x: x - 25, y, w: 8, h: 15, s, vx: -0.8 }); projectiles.push({ x: x - 10, y, w: 8, h: 15, s, vx: -0.3 }); projectiles.push({ x: x + 2, y, w: 8, h: 15, s, vx: 0.3 }); projectiles.push({ x: x + 17, y, w: 8, h: 15, s, vx: 0.8 }); break;
-                }
-            }
-            
-            function fireSuperWeapon() {
-                score += enemies.length * 50; enemies = []; enemyProjectiles = [];
-                gameContainer.style.animation = 'flash 0.3s forwards';
-                setTimeout(() => gameContainer.style.animation = '', 300);
-            }
-            document.head.insertAdjacentHTML("beforeend", `<style>@keyframes flash{0%{box-shadow:inset 0 0 0 1000px rgba(255,255,255,0.7);}100%{box-shadow:inset 0 0 0 0 rgba(255,255,255,0);}}</style>`);
-
-            // --- LÓGICA DE PROJÉTEIS E COLISÕES ---
-            function updateProjectiles() {
-                projectiles.forEach((p, i) => { p.y -= p.s; if(p.vx) p.x += p.vx * (p.s / 2); if (p.y < 0 || p.x < 0 || p.x > canvas.width) projectiles.splice(i, 1); });
-                enemyProjectiles.forEach((p, i) => { p.y += p.speed; if(p.vx) p.x += p.vx; if (p.y > canvas.height) enemyProjectiles.splice(i, 1); });
-            }
-            
-            function checkCollisions() {
-                for (let i = projectiles.length - 1; i >= 0; i--) { for (let j = enemies.length - 1; j >= 0; j--) {
-                    if (isColliding(projectiles[i], enemies[j])) {
-                        projectiles.splice(i, 1); enemies[j].health--;
-                        if (enemies[j].health <= 0) { spawnPowerup(enemies[j].x, enemies[j].y); enemies.splice(j, 1); score += 100; }
-                        break; 
-                }}}
-                for (let i = powerups.length - 1; i >= 0; i--) { if (isColliding(player, powerups[i])) { applyPowerup(powerups[i].type); powerups.splice(i, 1); }}
-                if (!player.isHit) {
-                    const hitables = [...enemyProjectiles, ...enemies];
-                    for (let i = hitables.length - 1; i >= 0; i--) {
-                        if (isColliding(hitables[i], player)) {
-                            handlePlayerHit();
-                            if (hitables[i].health !== undefined) enemies.splice(enemies.indexOf(hitables[i]), 1); else enemyProjectiles.splice(enemyProjectiles.indexOf(hitables[i]), 1);
-                            if (gameOver) return; break;
-                        }
-                    }
-                }
-            }
-
-            function handlePlayerHit() { player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) endGame(); }
-            function isColliding(r1, r2) {
-                const p1 = { x: r1.x, y: r1.y, w: r1.w || r1.width, h: r1.h || r1.height };
-                const p2 = { x: r2.x, y: r2.y, w: r2.width, h: r2.height };
-                return p1.x < p2.x + p2.w && p1.x + p1.w > p2.x && p1.y < p2.y + p2.h && p1.y + p1.h > p2.y;
-            }
-
-            // --- FUNÇÕES DE DESENHO ---
-            function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = player.isHit ? '#ffffff' : '#0af'; ctx.fillRect(player.x, player.y, player.width, player.height);
-                ctx.fillStyle = projectileColors[player.shotCount - 2] || '#FF00FF';
-                projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
-                enemies.forEach(e => {
-                    ctx.fillStyle = `rgb(255, ${Math.floor(255 * (e.health / e.maxHealth))}, ${Math.floor(255 * (e.health / e.maxHealth))})`;
-                    ctx.fillRect(e.x, e.y, e.width, e.height);
-                });
-                ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
-                powerups.forEach(p => {
-                    ctx.fillStyle = p.type === 'shotCount' ? '#00FFFF' : '#FFD700'; ctx.beginPath();
-                    ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = "#000"; ctx.font = "bold 20px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                    ctx.fillText(p.type === 'shotCount' ? '+' : 'S', p.x + p.width/2, p.y + p.height/2 + 2);
-                });
-            }
-
-            // --- GAME LOOP PRINCIPAL ---
-            function gameLoop() {
-                if (gameOver) return;
-                const now = Date.now();
-                spawnEnemies(); updatePlayer(now); updateProjectiles(); updateEnemies(now);
-                updatePowerups(); checkCollisions(); updateUIDisplay(); draw();
-                requestAnimationFrame(gameLoop);
-            }
-            
-            // --- EVENT LISTENERS ---
-            uiElements.startBtn.addEventListener('click', initGame);
-            uiElements.restartBtn.addEventListener('click', initGame);
-            // Teclado & Mouse
-            window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(keys.hasOwnProperty(k)) keys[k] = true; });
-            window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if(keys.hasOwnProperty(k)) keys[k] = false; });
-            canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouse.down = true; });
-            canvas.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
-            canvas.addEventListener('mouseleave', () => mouse.down = false);
-            
-            // Controles de Toque (Mobile)
-            if (isMobile) {
-                document.getElementById('shoot-btn').addEventListener('touchstart', (e)=>{ e.preventDefault(); keys.j = true; });
-                document.getElementById('shoot-btn').addEventListener('touchend', (e)=>{ e.preventDefault(); keys.j = false; });
-                document.getElementById('special-btn').addEventListener('touchstart', (e)=>{ e.preventDefault(); keys.f = true; });
-                document.getElementById('special-btn').addEventListener('touchend', (e)=>{ e.preventDefault(); keys.f = false; });
-                
-                gameContainer.addEventListener('touchstart', (e) => {
-                    const touch = e.touches[0];
-                    if (touch.clientX < window.innerWidth / 2) { // Toque na metade esquerda ativa o joystick
-                        e.preventDefault();
-                        joystick.active = true;
-                        joystick.x = touch.clientX; joystick.y = touch.clientY;
-                        uiElements.joystickBase.style.left = `${joystick.x}px`; uiElements.joystickBase.style.top = `${joystick.y}px`;
-                        uiElements.joystickStick.style.left = `${joystick.x}px`; uiElements.joystickStick.style.top = `${joystick.y}px`;
-                        uiElements.joystickBase.classList.remove('hidden'); uiElements.joystickStick.classList.remove('hidden');
-                    }
-                });
-                gameContainer.addEventListener('touchmove', (e) => {
-                    if (!joystick.active) return;
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    const dx = touch.clientX - joystick.x; const dy = touch.clientY - joystick.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-
-                    if (distance > joystick.maxRadius) {
-                        joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle);
-                        uiElements.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`;
-                        uiElements.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`;
-                    } else {
-                        joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius;
-                        uiElements.joystickStick.style.left = `${touch.clientX}px`; uiElements.joystickStick.style.top = `${touch.clientY}px`;
-                    }
-                });
-                gameContainer.addEventListener('touchend', (e) => {
-                    // Se o toque que terminou era o do joystick
-                    if (joystick.active && Array.from(e.changedTouches).some(t => t.clientX < window.innerWidth / 2)) {
-                        joystick.active = false; joystick.dx = 0; joystick.dy = 0;
-                        uiElements.joystickBase.classList.add('hidden'); uiElements.joystickStick.classList.add('hidden');
-                    }
-                });
-            }
+        }
+        function updateEnemies(now) {
+            enemies.forEach((enemy, index) => {
+                enemy.y += enemy.vy;
+                enemy.x = enemy.initialX + Math.sin(now / enemy.waveFrequency) * enemy.waveAmplitude;
+                if (now - enemy.lastShotTime > enemy.shootCooldown && Math.random() < 0.5) { enemyShootingPatterns[enemy.shootPattern](enemy); enemy.lastShotTime = now; }
+                if (enemy.y > canvas.height) enemies.splice(index, 1);
+            });
+        }
+        const enemyShootingPatterns = {
+            single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, speed: 2 }),
+            spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, speed: 1.75, vx: -0.5 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, speed: 1.75, vx: 0.5 }); },
+            burst: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 10, speed: 2.5 }); setTimeout(() => { if (enemies.includes(e)) enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 10, speed: 2.5 }); }, 150); }
         };
+        function spawnBoss() { boss = { x: canvas.width / 2 - 100, y: -200, width: 200, height: 100, health: 150, maxHealth: 150, vy: 0.5, targetY: 50, isVulnerable: false, lastShotTime: Date.now(), shootCooldown: 1500, parts: [{ id: 'turretL', x: -30, y: 50, width: 40, height: 40, health: 50, maxHealth: 50, destroyed: false, lastShotTime: 0, shootCooldown: 2000 }, { id: 'turretR', x: 190, y: 50, width: 40, height: 40, health: 50, maxHealth: 50, destroyed: false, lastShotTime: 0, shootCooldown: 2000 }] }; }
+        function updateBoss(now) {
+            if (!boss) return;
+            if (boss.y < boss.targetY) boss.y += boss.vy;
+            boss.parts.forEach(part => {
+                if (part.destroyed) return;
+                if (now - part.lastShotTime > part.shootCooldown) {
+                    part.lastShotTime = now;
+                    const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x)));
+                    enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, speed: 2.5, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
+                }
+            });
+            if (!boss.isVulnerable && boss.parts.every(p => p.destroyed)) boss.isVulnerable = true;
+            if (boss.isVulnerable && now - boss.lastShotTime > boss.shootCooldown) {
+                boss.lastShotTime = now;
+                for (let i = -2; i <= 2; i++) enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 8, height: 15, speed: 2, vx: i * 0.5, vy: 2 });
+            }
+        }
+        function spawnPowerup(x, y) {
+            if (Math.random() > 0.02) return;
+            let possibleDrops = ['shotSpeed', 'health'];
+            if (player.shotCount < 5) possibleDrops.push('shotCount');
+            const type = possibleDrops[Math.floor(Math.random() * possibleDrops.length)];
+            powerups.push({ x, y, width: 30, height: 30, type, speed: 2 });
+        }
+        function applyPowerup(type) {
+            if (type === 'shotCount' && player.shotCount < 5) player.shotCount++;
+            if (type === 'shotSpeed') player.projectileSpeed = Math.min(14, player.projectileSpeed + 0.5);
+            if (type === 'health') player.health = Math.min(player.maxHealth, player.health + 1);
+        }
+        function updatePowerups() { powerups.forEach((p, index) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(index, 1); }); }
+        function updatePlayer(now) {
+            if (player.isHit && now - player.lastHitTime > playerSettings.hitInvincibilityDuration) player.isHit = false;
+            if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; }
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            if ((keys.j || mouse.down) && now - playerSettings.lastShotTime > playerSettings.shootCooldown) { fireProjectiles(); playerSettings.lastShotTime = now; }
+            if (keys.f && now - playerSettings.lastSpecialTime > playerSettings.specialCooldown) { fireSuperWeapon(); playerSettings.lastSpecialTime = now; }
+        }
+        function fireProjectiles() {
+            const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y;
+            switch (player.shotCount) {
+                case 2: projectiles.push({ x: x - 10, y, w: 5, h: 20, s }); projectiles.push({ x: x + 5, y, w: 5, h: 20, s }); break;
+                case 3: projectiles.push({ x: x - 5, y, w: 6, h: 18, s }); projectiles.push({ x: x - 15, y, w: 6, h: 18, s, vx: -0.5 }); projectiles.push({ x: x + 5, y, w: 6, h: 18, s, vx: 0.5 }); break;
+                case 4: projectiles.push({ x: x - 18, y, w: 7, h: 16, s, vx: -0.2 }); projectiles.push({ x: x - 6, y, w: 7, h: 16, s, vx: 0.2 }); projectiles.push({ x: x + 6, y, w: 7, h: 16, s, vx: -0.2 }); projectiles.push({ x: x + 18, y, w: 7, h: 16, s, vx: 0.2 }); break;
+                case 5: projectiles.push({ x: x - 5, y, w: 8, h: 15, s }); projectiles.push({ x: x - 25, y, w: 8, h: 15, s, vx: -0.8 }); projectiles.push({ x: x - 10, y, w: 8, h: 15, s, vx: -0.3 }); projectiles.push({ x: x + 2, y, w: 8, h: 15, s, vx: 0.3 }); projectiles.push({ x: x + 17, y, w: 8, h: 15, s, vx: 0.8 }); break;
+            }
+        }
+        function fireSuperWeapon() { score += enemies.length * 50; enemies = []; enemyProjectiles = []; gameContainer.style.animation = 'flash 0.3s forwards'; setTimeout(() => gameContainer.style.animation = '', 300); }
+        document.head.insertAdjacentHTML("beforeend", `<style>@keyframes flash{0%{box-shadow:inset 0 0 0 1000px rgba(255,255,255,0.7);}100%{box-shadow:inset 0 0 0 0 rgba(255,255,255,0);}}</style>`);
+        function updateProjectiles() {
+            projectiles.forEach((p, i) => { p.y -= p.s; if (p.vx) p.x += p.vx * (p.s / 2); if (p.y < 0 || p.x < 0 || p.x > canvas.width) projectiles.splice(i, 1); });
+            enemyProjectiles.forEach((p, i) => { p.y += p.speed; if (p.vx) p.x += p.vx; if (p.y > canvas.height) enemyProjectiles.splice(i, 1); });
+        }
+        function checkCollisions() {
+            for (let i = projectiles.length - 1; i >= 0; i--) { for (let j = enemies.length - 1; j >= 0; j--) { if (isColliding(projectiles[i], enemies[j])) { projectiles.splice(i, 1); enemies[j].health--; if (enemies[j].health <= 0) { spawnPowerup(enemies[j].x, enemies[j].y); enemies.splice(j, 1); score += 100; } break; } } }
+            for (let i = powerups.length - 1; i >= 0; i--) { if (isColliding(player, powerups[i])) { applyPowerup(powerups[i].type); powerups.splice(i, 1); } }
+            if (bossActive && boss) {
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    if (!projectiles[i]) continue;
+                    boss.parts.forEach(part => {
+                        if (!part.destroyed && isColliding(projectiles[i], { ...part, x: boss.x + part.x, y: boss.y + part.y })) {
+                            part.health--; projectiles.splice(i, 1);
+                            if (part.health <= 0) { part.destroyed = true; score += 500; }
+                        }
+                    });
+                    if (!projectiles[i]) continue;
+                    if (boss.isVulnerable && isColliding(projectiles[i], boss)) {
+                        boss.health--; projectiles.splice(i, 1);
+                        if (boss.health <= 0) { score += 5000; bossActive = false; boss = null; }
+                    }
+                }
+            }
+            if (!player.isHit) {
+                const hitables = [...enemyProjectiles];
+                if (!bossActive) hitables.push(...enemies);
+                else if (boss) { hitables.push(boss); boss.parts.forEach(p => { if (!p.destroyed) hitables.push({ ...p, x: boss.x + p.x, y: boss.y + p.y }); }); }
+                for (let i = hitables.length - 1; i >= 0; i--) {
+                    if (isColliding(hitables[i], player)) {
+                        handlePlayerHit();
+                        if (hitables[i].maxHealth !== undefined) { const index = enemies.indexOf(hitables[i]); if (index > -1) enemies.splice(index, 1); } else { const index = enemyProjectiles.indexOf(hitables[i]); if (index > -1) enemyProjectiles.splice(index, 1); }
+                        if (gameOver) return; break;
+                    }
+                }
+            }
+        }
+        function handlePlayerHit() { player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) endGame(); }
+        function isColliding(r1, r2) {
+            const p1 = { x: r1.x, y: r1.y, w: r1.w || r1.width, h: r1.h || r1.height };
+            const p2 = { x: r2.x, y: r2.y, w: r2.width, h: r2.height };
+            return p1.x < p2.x + p2.w && p1.x + p1.w > p2.x && p1.y < p2.y + p2.h && p1.y + p1.h > p2.y;
+        }
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (!playerImage.useFallback && playerImage.complete && playerImage.naturalHeight !== 0) { ctx.globalAlpha = player.isHit ? 0.5 : 1.0; ctx.drawImage(playerImage, player.x, player.y, player.width, player.height); ctx.globalAlpha = 1.0; } else { ctx.fillStyle = player.isHit ? '#ffffff' : '#0af'; ctx.fillRect(player.x, player.y, player.width, player.height); }
+            ctx.fillStyle = projectileColors[player.shotCount - 2] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+            enemies.forEach(e => { ctx.fillStyle = `rgb(255, ${Math.floor(255 * (e.health / e.maxHealth))}, ${Math.floor(255 * (e.health / e.maxHealth))})`; ctx.fillRect(e.x, e.y, e.width, e.height); });
+            ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+            powerups.forEach(p => {
+                const isHealth = p.type === 'health';
+                ctx.fillStyle = isHealth ? '#ff4d4d' : (p.type === 'shotCount' ? '#00FFFF' : '#FFD700');
+                ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#000"; ctx.font = `bold ${isHealth ? 24 : 20}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.fillText(isHealth ? '♥' : (p.type === 'shotCount' ? '+' : 'S'), p.x + p.width / 2, p.y + p.height / 2 + 2);
+            });
+            if (bossActive && boss) drawBoss();
+        }
+        function drawBoss() {
+            ctx.fillStyle = boss.isVulnerable ? (Math.floor(Date.now() / 100) % 2 ? '#ff4d4d' : '#8B0000') : '#8B0000'; ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+            boss.parts.forEach(part => { if (!part.destroyed) { ctx.fillStyle = '#6a0dad'; ctx.fillRect(boss.x + part.x, boss.y + part.y, part.width, part.height); } });
+        }
+        function gameLoop() {
+            if (gameOver) return;
+            const now = Date.now();
+            manageGameFlow(now); updatePlayer(now); updateProjectiles(); updateEnemies(now); updatePowerups(); checkCollisions(); updateUIDisplay(); draw();
+            requestAnimationFrame(gameLoop);
+        }
+        uiElements.startBtn.addEventListener('click', initGame); uiElements.restartBtn.addEventListener('click', initGame);
+        window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; });
+        window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = false; });
+        canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouse.down = true; });
+        canvas.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
+        canvas.addEventListener('mouseleave', () => mouse.down = false);
+        if (isMobile) {
+            document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.j = true; });
+            document.getElementById('shoot-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.j = false; });
+            document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; });
+            document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
+            gameContainer.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                if (touch.clientX < window.innerWidth / 2) {
+                    e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY;
+                    uiElements.joystickBase.style.left = `${joystick.x}px`; uiElements.joystickBase.style.top = `${joystick.y}px`;
+                    uiElements.joystickStick.style.left = `${joystick.x}px`; uiElements.joystickStick.style.top = `${joystick.y}px`;
+                    uiElements.joystickBase.classList.remove('hidden'); uiElements.joystickStick.classList.remove('hidden');
+                }
+            });
+            gameContainer.addEventListener('touchmove', (e) => {
+                if (!joystick.active) return; e.preventDefault();
+                const touch = e.touches[0]; const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y;
+                const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx);
+                if (distance > joystick.maxRadius) {
+                    joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle);
+                    uiElements.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`; uiElements.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`;
+                } else { joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius; uiElements.joystickStick.style.left = `${touch.clientX}px`; uiElements.joystickStick.style.top = `${touch.clientY}px`; }
+            });
+            gameContainer.addEventListener('touchend', (e) => { if (joystick.active && Array.from(e.changedTouches).some(t => t.clientX < window.innerWidth / 2)) { joystick.active = false; joystick.dx = 0; joystick.dy = 0; uiElements.joystickBase.classList.add('hidden'); uiElements.joystickStick.classList.add('hidden'); } });
+        }
+    };
     </script>
 </body>
 </html>
