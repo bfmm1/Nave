@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
         body { font-family: 'Arial', sans-serif; background-color: #111; color: #fff; display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; overflow: hidden; }
         #game-container { position: relative; aspect-ratio: 9 / 14; height: 95vh; max-height: 95vh; width: calc(95vh * (9 / 14)); max-width: 100vw; background-color: #000; overflow: hidden; border: 2px solid #333; cursor: crosshair; }
-        canvas { width: 100%; height: 100%; display: block; background-color: #000; } /* Fundo de CSS removido, agora controlado por JS */
+        canvas { width: 100%; height: 100%; display: block; background-color: #000; }
         
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; z-index: 10; }
         .overlay h1, .overlay h2 { text-shadow: 0 0 10px #0ff; }
@@ -65,7 +65,7 @@ window.onload = function() {
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
 
     // --- CONFIGURAÇÕES E ASSETS ---
-    const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 0.5 };
+    const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5 };
     const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png' };
     const assets = {};
     
@@ -80,56 +80,18 @@ window.onload = function() {
     const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
     
     // --- FUNÇÕES DE DADOS E UI ---
-    function loadAssets() {
-        const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => {
-            return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; });
-        });
-        return Promise.all(promises);
-    }
-    function loadData() {
-        playerCurrency = parseInt(localStorage.getItem('playerCurrency') || '0', 10);
-        const savedUpgrades = JSON.parse(localStorage.getItem('playerUpgrades') || '{}');
-        playerUpgrades.maxUnlockedStage = parseInt(savedUpgrades.maxUnlockedStage || '1', 10);
-        for (const key in upgradeConfig) { playerUpgrades[key] = savedUpgrades[key] || (key === 'shield' || key === 'drones' ? 0 : 1); }
-        ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR');
-    }
-    function saveData() {
-        localStorage.setItem('playerCurrency', playerCurrency);
-        localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades));
-        const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0');
-        if (score > highScore) localStorage.setItem('aeroFighterHighScore', score);
-    }
+    function loadAssets() { const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => { return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; }); }); return Promise.all(promises); }
+    function loadData() { playerCurrency = parseInt(localStorage.getItem('playerCurrency') || '0', 10); const savedUpgrades = JSON.parse(localStorage.getItem('playerUpgrades') || '{}'); playerUpgrades.maxUnlockedStage = parseInt(savedUpgrades.maxUnlockedStage || '1', 10); for (const key in upgradeConfig) { playerUpgrades[key] = savedUpgrades[key] || (key === 'shield' || key === 'drones' ? 0 : 1); } ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); }
+    function saveData() { localStorage.setItem('playerCurrency', playerCurrency); localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades)); const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0'); if (score > highScore) localStorage.setItem('aeroFighterHighScore', score); }
     function resetData() { if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
     
     function showMainMenu() { ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
     function showUpgradeStore() { populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
     function showStageSelect() { selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
-    function populateUpgradeStore() {
-        ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`;
-        ui.upgradeStore.innerHTML = '';
-        for (const key in upgradeConfig) {
-            const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level));
-            const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item';
-            let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO';
-            itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`;
-            ui.upgradeStore.appendChild(itemDiv);
-        }
-        document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener('click', buyUpgrade));
-    }
-    function buyUpgrade(e) {
-        const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level));
-        if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); }
-    }
-    function updateStageSelectorDisplay() {
-        const stageNum = selectedStageIndex + 1; const startWave = selectedStageIndex * 10 + 1; const endWave = startWave + 9;
-        ui.stageDisplay.textContent = `Fase ${stageNum} (Ondas ${startWave}-${endWave})`;
-        ui.prevStageBtn.disabled = selectedStageIndex === 0; ui.nextStageBtn.disabled = selectedStageIndex >= playerUpgrades.maxUnlockedStage - 1;
-    }
-    function updateUIDisplay() {
-        ui.scoreDisplay.textContent = `Pontos: ${score.toLocaleString('pt-BR')}`; ui.waveDisplay.textContent = `Onda: ${wave}`;
-        ui.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`;
-        ui.specialText.textContent = player.specialAmmo; if (isMobile) ui.specialCountBtn.textContent = player.specialAmmo;
-    }
+    function populateUpgradeStore() { ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener('click', buyUpgrade)); }
+    function buyUpgrade(e) { const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
+    function updateStageSelectorDisplay() { const stageNum = selectedStageIndex + 1; const startWave = selectedStageIndex * 10 + 1; const endWave = startWave + 9; ui.stageDisplay.textContent = `Fase ${stageNum} (Ondas ${startWave}-${endWave})`; ui.prevStageBtn.disabled = selectedStageIndex === 0; ui.nextStageBtn.disabled = selectedStageIndex >= playerUpgrades.maxUnlockedStage - 1; }
+    function updateUIDisplay() { ui.scoreDisplay.textContent = `Pontos: ${score.toLocaleString('pt-BR')}`; ui.waveDisplay.textContent = `Onda: ${wave}`; ui.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`; ui.specialText.textContent = player.specialAmmo; if (isMobile) ui.specialCountBtn.textContent = player.specialAmmo; }
     function spawnDamageNumber(amount, x, y, color = '#fff') { damageNumbers.push({ text: Math.round(amount), x: x + 20, y: y, life: 60, vy: -0.5, color }); }
 
     // --- LÓGICA PRINCIPAL DO JOGO ---
@@ -137,7 +99,7 @@ window.onload = function() {
         ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
-        backgroundX = (assets.background.width - canvas.width) / 2; backgroundY = 0;
+        if (assets.background.width > 0) { backgroundX = (assets.background.width - canvas.width) / 2; backgroundY = assets.background.height - canvas.height; }
         player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 200 - (playerUpgrades.fireRate - 1) * 15, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 2 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
         if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, side: 'left', lastShotTime: 0 });
         if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, side: 'right', lastShotTime: 0 });
@@ -221,10 +183,10 @@ window.onload = function() {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (assets.background && assets.background.complete) {
-            backgroundY += CONFIG.BACKGROUND_SCROLL_SPEED;
-            const panRange = assets.background.width - canvas.width;
-            backgroundX = (panRange / 2) + Math.sin(backgroundY * 0.0005) * (panRange / 2);
-            if (backgroundY > assets.background.height - canvas.height) backgroundY = 0;
+            backgroundY -= CONFIG.BACKGROUND_SCROLL_SPEED;
+            if (backgroundY < 0) {
+                backgroundY = assets.background.height - canvas.height;
+            }
             ctx.drawImage(assets.background, backgroundX, backgroundY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
         }
 
