@@ -55,6 +55,7 @@
         const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
         const playerSettings = { width: 50, height: 50, speed: 4, initialMaxHealth: 10, shootCooldown: 200, lastShotTime: 0, specialCooldown: 15000, lastSpecialTime: -15000, hitInvincibilityDuration: 300 };
         const projectileColors = ['#00FF00', '#00FFFF', '#FFFF00', '#FF00FF'];
+        
         function initGame() {
             uiElements.mainMenu.classList.add('hidden'); uiElements.gameOverScreen.classList.add('hidden'); uiElements.gameUI.classList.remove('hidden'); if (isMobile) uiElements.actionButtons.classList.remove('hidden');
             gameStarted = true; gameOver = false; score = 0;
@@ -81,7 +82,7 @@
         }
         function manageGameFlow(now) {
             const elapsedTimeInSeconds = (now - gameStartTime) / 1000;
-            if (now - lastHealthUpgradeTime > 30000) { lastHealthUpgradeTime = now; player.maxHealth++; player.health++; }
+            if (now - lastHealthUpgradeTime > 30000) { lastHealthUpgradeTime = now; player.maxHealth++; player.health = Math.min(player.maxHealth, player.health + 1); }
             if (!bossSpawned && elapsedTimeInSeconds > 60) { bossSpawned = true; bossActive = true; enemies = []; spawnBoss(); }
             if (bossActive) updateBoss(now); else spawnEnemies(now, elapsedTimeInSeconds);
         }
@@ -110,24 +111,58 @@
             spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, speed: 1.75, vx: -0.5 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, speed: 1.75, vx: 0.5 }); },
             burst: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 10, speed: 2.5 }); setTimeout(() => { if (enemies.includes(e)) enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 10, speed: 2.5 }); }, 150); }
         };
-        function spawnBoss() { boss = { x: canvas.width / 2 - 100, y: -200, width: 200, height: 100, health: 150, maxHealth: 150, vy: 0.5, targetY: 50, isVulnerable: false, lastShotTime: Date.now(), shootCooldown: 1500, parts: [{ id: 'turretL', x: -30, y: 50, width: 40, height: 40, health: 50, maxHealth: 50, destroyed: false, lastShotTime: 0, shootCooldown: 2000 }, { id: 'turretR', x: 190, y: 50, width: 40, height: 40, health: 50, maxHealth: 50, destroyed: false, lastShotTime: 0, shootCooldown: 2000 }] }; }
+        
+        function spawnBoss() {
+            boss = {
+                x: canvas.width / 2 - 100, y: -200, width: 200, height: 100,
+                health: 150, maxHealth: 150, vy: 0.5, vx: 1, patrolRange: [20, canvas.width - 220],
+                targetY: 50, phase: 1, shotAngle: 0,
+                lastShotTime: Date.now(),
+                parts: [
+                    { id: 'turretL', x: -30, y: 50, width: 40, height: 40, health: 50, maxHealth: 50, destroyed: false, lastShotTime: 0, shootCooldown: 1200 },
+                    { id: 'turretR', x: 190, y: 50, width: 40, height: 40, health: 50, maxHealth: 50, destroyed: false, lastShotTime: 0, shootCooldown: 1200 }
+                ]
+            };
+        }
+        
         function updateBoss(now) {
             if (!boss) return;
-            if (boss.y < boss.targetY) boss.y += boss.vy;
-            boss.parts.forEach(part => {
-                if (part.destroyed) return;
-                if (now - part.lastShotTime > part.shootCooldown) {
-                    part.lastShotTime = now;
-                    const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x)));
-                    enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, speed: 2.5, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
+            if (boss.y < boss.targetY) { boss.y += boss.vy; } else { boss.x += boss.vx; if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) { boss.vx *= -1; } }
+
+            // Lógica de Fases
+            if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; }
+            if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; }
+
+            // Lógica de Ataque por Fase
+            if (boss.phase === 1) { // Ataque das Torretas
+                boss.parts.forEach(part => {
+                    if (!part.destroyed && now - part.lastShotTime > part.shootCooldown) {
+                        part.lastShotTime = now;
+                        const angle = Math.atan2((player.y - (boss.y + part.y)), (player.x - (boss.x + part.x)));
+                        enemyProjectiles.push({ x: boss.x + part.x + part.width / 2, y: boss.y + part.y + part.height, width: 10, height: 10, speed: 2.5, vx: Math.cos(angle) * 2.5, vy: Math.sin(angle) * 2.5 });
+                    }
+                });
+            } else { // Fases 2 e 3, ataque do corpo principal
+                const cooldown = (boss.phase === 3) ? 700 : 1000; // Atira mais rápido na fase 3
+                if (now - boss.lastShotTime > cooldown) {
+                    boss.lastShotTime = now;
+                    // Ataque Espiral Rotativa (Fase 2 e 3)
+                    boss.shotAngle += 0.2;
+                    for (let i = 0; i < 6; i++) {
+                        const angle = boss.shotAngle + (i * Math.PI / 3);
+                        enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, width: 10, height: 10, speed: 2, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 });
+                    }
+                    // Ataque Adicional (Fase 3 - Fúria)
+                    if (boss.phase === 3) {
+                        const angleToPlayer = Math.atan2(player.y - (boss.y + boss.height/2), player.x - (boss.x + boss.width/2));
+                        for (let i = -1; i <= 1; i++) {
+                             enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height/2, width: 7, height: 20, speed: 3, vx: Math.cos(angleToPlayer + i*0.15) * 3, vy: Math.sin(angleToPlayer + i*0.15) * 3 });
+                        }
+                    }
                 }
-            });
-            if (!boss.isVulnerable && boss.parts.every(p => p.destroyed)) boss.isVulnerable = true;
-            if (boss.isVulnerable && now - boss.lastShotTime > boss.shootCooldown) {
-                boss.lastShotTime = now;
-                for (let i = -2; i <= 2; i++) enemyProjectiles.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height, width: 8, height: 15, speed: 2, vx: i * 0.5, vy: 2 });
             }
         }
+
         function spawnPowerup(x, y) {
             if (Math.random() > 0.02) return;
             let possibleDrops = ['shotSpeed', 'health'];
@@ -141,6 +176,7 @@
             if (type === 'health') player.health = Math.min(player.maxHealth, player.health + 1);
         }
         function updatePowerups() { powerups.forEach((p, index) => { p.y += p.speed; if (p.y > canvas.height) powerups.splice(index, 1); }); }
+        
         function updatePlayer(now) {
             if (player.isHit && now - player.lastHitTime > playerSettings.hitInvincibilityDuration) player.isHit = false;
             if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; }
@@ -160,9 +196,10 @@
         }
         function fireSuperWeapon() { score += enemies.length * 50; enemies = []; enemyProjectiles = []; gameContainer.style.animation = 'flash 0.3s forwards'; setTimeout(() => gameContainer.style.animation = '', 300); }
         document.head.insertAdjacentHTML("beforeend", `<style>@keyframes flash{0%{box-shadow:inset 0 0 0 1000px rgba(255,255,255,0.7);}100%{box-shadow:inset 0 0 0 0 rgba(255,255,255,0);}}</style>`);
+        
         function updateProjectiles() {
             projectiles.forEach((p, i) => { p.y -= p.s; if (p.vx) p.x += p.vx * (p.s / 2); if (p.y < 0 || p.x < 0 || p.x > canvas.width) projectiles.splice(i, 1); });
-            enemyProjectiles.forEach((p, i) => { p.y += p.speed; if (p.vx) p.x += p.vx; if (p.y > canvas.height) enemyProjectiles.splice(i, 1); });
+            enemyProjectiles.forEach((p, i) => { p.y += p.vy || p.speed; if (p.vx) p.x += p.vx; if (p.y > canvas.height || p.y < 0 || p.x < 0 || p.x > canvas.width) enemyProjectiles.splice(i, 1); });
         }
         function checkCollisions() {
             for (let i = projectiles.length - 1; i >= 0; i--) { for (let j = enemies.length - 1; j >= 0; j--) { if (isColliding(projectiles[i], enemies[j])) { projectiles.splice(i, 1); enemies[j].health--; if (enemies[j].health <= 0) { spawnPowerup(enemies[j].x, enemies[j].y); enemies.splice(j, 1); score += 100; } break; } } }
@@ -170,17 +207,9 @@
             if (bossActive && boss) {
                 for (let i = projectiles.length - 1; i >= 0; i--) {
                     if (!projectiles[i]) continue;
-                    boss.parts.forEach(part => {
-                        if (!part.destroyed && isColliding(projectiles[i], { ...part, x: boss.x + part.x, y: boss.y + part.y })) {
-                            part.health--; projectiles.splice(i, 1);
-                            if (part.health <= 0) { part.destroyed = true; score += 500; }
-                        }
-                    });
+                    boss.parts.forEach(part => { if (!part.destroyed && isColliding(projectiles[i], { ...part, x: boss.x + part.x, y: boss.y + part.y })) { part.health--; projectiles.splice(i, 1); if (part.health <= 0) { part.destroyed = true; score += 500; } } });
                     if (!projectiles[i]) continue;
-                    if (boss.isVulnerable && isColliding(projectiles[i], boss)) {
-                        boss.health--; projectiles.splice(i, 1);
-                        if (boss.health <= 0) { score += 5000; bossActive = false; boss = null; }
-                    }
+                    if (boss.phase > 1 && isColliding(projectiles[i], boss)) { boss.health--; projectiles.splice(i, 1); if (boss.health <= 0) { score += 5000; bossActive = false; boss = null; } }
                 }
             }
             if (!player.isHit) {
@@ -190,35 +219,30 @@
                 for (let i = hitables.length - 1; i >= 0; i--) {
                     if (isColliding(hitables[i], player)) {
                         handlePlayerHit();
-                        if (hitables[i].maxHealth !== undefined) { const index = enemies.indexOf(hitables[i]); if (index > -1) enemies.splice(index, 1); } else { const index = enemyProjectiles.indexOf(hitables[i]); if (index > -1) enemyProjectiles.splice(index, 1); }
+                        const h = hitables[i];
+                        if (h.maxHealth !== undefined) { const index = enemies.indexOf(h); if (index > -1) enemies.splice(index, 1); } else { const index = enemyProjectiles.indexOf(h); if (index > -1) enemyProjectiles.splice(index, 1); }
                         if (gameOver) return; break;
                     }
                 }
             }
         }
         function handlePlayerHit() { player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) endGame(); }
-        function isColliding(r1, r2) {
-            const p1 = { x: r1.x, y: r1.y, w: r1.w || r1.width, h: r1.h || r1.height };
-            const p2 = { x: r2.x, y: r2.y, w: r2.width, h: r2.height };
-            return p1.x < p2.x + p2.w && p1.x + p1.w > p2.x && p1.y < p2.y + p2.h && p1.y + p1.h > p2.y;
-        }
+        function isColliding(r1, r2) { const p1 = { x: r1.x, y: r1.y, w: r1.w || r1.width, h: r1.h || r1.height }; const p2 = { x: r2.x, y: r2.y, w: r2.width, h: r2.height }; return p1.x < p2.x + p2.w && p1.x + p1.w > p2.x && p1.y < p2.y + p2.h && p1.y + p1.h > p2.y; }
+        
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (!playerImage.useFallback && playerImage.complete && playerImage.naturalHeight !== 0) { ctx.globalAlpha = player.isHit ? 0.5 : 1.0; ctx.drawImage(playerImage, player.x, player.y, player.width, player.height); ctx.globalAlpha = 1.0; } else { ctx.fillStyle = player.isHit ? '#ffffff' : '#0af'; ctx.fillRect(player.x, player.y, player.width, player.height); }
             ctx.fillStyle = projectileColors[player.shotCount - 2] || '#FF00FF'; projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
             enemies.forEach(e => { ctx.fillStyle = `rgb(255, ${Math.floor(255 * (e.health / e.maxHealth))}, ${Math.floor(255 * (e.health / e.maxHealth))})`; ctx.fillRect(e.x, e.y, e.width, e.height); });
             ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
-            powerups.forEach(p => {
-                const isHealth = p.type === 'health';
-                ctx.fillStyle = isHealth ? '#ff4d4d' : (p.type === 'shotCount' ? '#00FFFF' : '#FFD700');
-                ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill();
-                ctx.fillStyle = "#000"; ctx.font = `bold ${isHealth ? 24 : 20}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-                ctx.fillText(isHealth ? '♥' : (p.type === 'shotCount' ? '+' : 'S'), p.x + p.width / 2, p.y + p.height / 2 + 2);
-            });
+            powerups.forEach(p => { const isHealth = p.type === 'health'; ctx.fillStyle = isHealth ? '#ff4d4d' : (p.type === 'shotCount' ? '#00FFFF' : '#FFD700'); ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#000"; ctx.font = `bold ${isHealth ? 24 : 20}px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(isHealth ? '♥' : (p.type === 'shotCount' ? '+' : 'S'), p.x + p.width / 2, p.y + p.height / 2 + 2); });
             if (bossActive && boss) drawBoss();
         }
         function drawBoss() {
-            ctx.fillStyle = boss.isVulnerable ? (Math.floor(Date.now() / 100) % 2 ? '#ff4d4d' : '#8B0000') : '#8B0000'; ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+            if (boss.phase === 1) ctx.fillStyle = '#8B0000';
+            else if (boss.phase === 2) ctx.fillStyle = (Math.floor(Date.now() / 100) % 2 ? '#ff4d4d' : '#8B0000');
+            else ctx.fillStyle = (Math.floor(Date.now() / 50) % 2 ? '#FF0000' : '#ff4d4d');
+            ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
             boss.parts.forEach(part => { if (!part.destroyed) { ctx.fillStyle = '#6a0dad'; ctx.fillRect(boss.x + part.x, boss.y + part.y, part.width, part.height); } });
         }
         function gameLoop() {
@@ -234,27 +258,14 @@
         canvas.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
         canvas.addEventListener('mouseleave', () => mouse.down = false);
         if (isMobile) {
-            document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.j = true; });
-            document.getElementById('shoot-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.j = false; });
-            document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; });
-            document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
+            document.getElementById('shoot-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.j = true; }); document.getElementById('shoot-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.j = false; });
+            document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; }); document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
             gameContainer.addEventListener('touchstart', (e) => {
-                const touch = e.touches[0];
-                if (touch.clientX < window.innerWidth / 2) {
-                    e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY;
-                    uiElements.joystickBase.style.left = `${joystick.x}px`; uiElements.joystickBase.style.top = `${joystick.y}px`;
-                    uiElements.joystickStick.style.left = `${joystick.x}px`; uiElements.joystickStick.style.top = `${joystick.y}px`;
-                    uiElements.joystickBase.classList.remove('hidden'); uiElements.joystickStick.classList.remove('hidden');
-                }
+                const touch = e.touches[0]; if (touch.clientX < window.innerWidth / 2) { e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY; uiElements.joystickBase.style.left = `${joystick.x}px`; uiElements.joystickBase.style.top = `${joystick.y}px`; uiElements.joystickStick.style.left = `${joystick.x}px`; uiElements.joystickStick.style.top = `${joystick.y}px`; uiElements.joystickBase.classList.remove('hidden'); uiElements.joystickStick.classList.remove('hidden'); }
             });
             gameContainer.addEventListener('touchmove', (e) => {
-                if (!joystick.active) return; e.preventDefault();
-                const touch = e.touches[0]; const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y;
-                const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx);
-                if (distance > joystick.maxRadius) {
-                    joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle);
-                    uiElements.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`; uiElements.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`;
-                } else { joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius; uiElements.joystickStick.style.left = `${touch.clientX}px`; uiElements.joystickStick.style.top = `${touch.clientY}px`; }
+                if (!joystick.active) return; e.preventDefault(); const touch = e.touches[0]; const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y; const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx);
+                if (distance > joystick.maxRadius) { joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle); uiElements.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`; uiElements.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`; } else { joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius; uiElements.joystickStick.style.left = `${touch.clientX}px`; uiElements.joystickStick.style.top = `${touch.clientY}px`; }
             });
             gameContainer.addEventListener('touchend', (e) => { if (joystick.active && Array.from(e.changedTouches).some(t => t.clientX < window.innerWidth / 2)) { joystick.active = false; joystick.dx = 0; joystick.dy = 0; uiElements.joystickBase.classList.add('hidden'); uiElements.joystickStick.classList.add('hidden'); } });
         }
