@@ -102,29 +102,35 @@ window.onload = function() {
     let backgroundY = 0;
     let bossActive = false;
     const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
+    // ALTERADO: Adicionado ID de toque para o joystick para evitar conflitos
+    let joystickTouchId = null;
     
     // --- FUNÇÕES DE DADOS, UI E NAVEGAÇÃO ---
     function loadAssets() { const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => { return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; }); }); return Promise.all(promises); }
     function loadData() { playerCurrency = parseInt(localStorage.getItem('playerCurrency') || '0', 10); const savedUpgrades = JSON.parse(localStorage.getItem('playerUpgrades') || '{}'); playerUpgrades.maxUnlockedStage = parseInt(savedUpgrades.maxUnlockedStage || '1', 10); for (const key in upgradeConfig) { playerUpgrades[key] = savedUpgrades[key] || (key === 'shield' || key === 'drones' ? 0 : 1); } ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); }
     function saveData() { localStorage.setItem('playerCurrency', playerCurrency); localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades)); const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0'); if (score > highScore) localStorage.setItem('aeroFighterHighScore', score); }
-    function resetData() { if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
+    function resetData(e) { if(isMobile) e.preventDefault(); if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
     
-    function showMainMenu() { ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
-    function showUpgradeStore() { populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
-    function showStageSelect() { selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
-    function populateUpgradeStore() { ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level -1)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener('click', buyUpgrade)); }
-    function buyUpgrade(e) { const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level-1)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
+    function showMainMenu(e) { if(isMobile && e) e.preventDefault(); ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
+    function showUpgradeStore(e) { if(isMobile) e.preventDefault(); populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
+    function showStageSelect(e) { if(isMobile) e.preventDefault(); selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
+    function populateUpgradeStore() { const clickEvent = isMobile ? 'touchstart' : 'click'; ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level -1)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener(clickEvent, buyUpgrade)); }
+    function buyUpgrade(e) { if(isMobile) e.preventDefault(); const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level-1)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
     function updateStageSelectorDisplay() { const stageNum = selectedStageIndex + 1; const startWave = selectedStageIndex * 10 + 1; const endWave = startWave + 9; ui.stageDisplay.textContent = `Fase ${stageNum} (Ondas ${startWave}-${endWave})`; ui.prevStageBtn.disabled = selectedStageIndex === 0; ui.nextStageBtn.disabled = selectedStageIndex >= playerUpgrades.maxUnlockedStage - 1; }
     function updateUIDisplay() { ui.scoreDisplay.textContent = `Pontos: ${score.toLocaleString('pt-BR')}`; ui.waveDisplay.textContent = `Onda: ${wave}`; ui.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`; ui.specialText.textContent = player.specialAmmo; if (isMobile) ui.specialCountBtn.textContent = player.specialAmmo; }
     function spawnDamageNumber(amount, x, y, color = '#fff') { damageNumbers.push({ text: Math.round(amount), x: x + 20, y: y, life: 60, vy: -0.5, color }); }
 
     // --- LÓGICA PRINCIPAL DO JOGO ---
     function initGame(startingWave) {
+        if(isMobile && typeof startingWave !== 'number') startingWave.preventDefault();
+        const waveNum = typeof startingWave === 'number' ? startingWave : (selectedStageIndex * 10) + 1;
+
         ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
-        gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
+        gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = waveNum - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
-        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
+        // ALTERADO: Velocidade da nave aumentada em 20% no celular
+        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: isMobile ? 4.8 : 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
         const droneSize = 20;
         if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, width: droneSize, height: droneSize, side: 'left', lastShotTime: 0 });
         if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, width: droneSize, height: droneSize, side: 'right', lastShotTime: 0 });
@@ -133,11 +139,10 @@ window.onload = function() {
     }
     function startNextWave() { wave++; if (player.hasShield) player.shieldActive = true; if (wave > 0 && wave % 10 === 0) { bossActive = true; spawnBoss(); } else { spawnEnemies(); } }
     function handlePlayerHit() { if (player.shieldActive) { player.shieldActive = false; player.isHit = true; player.lastHitTime = Date.now(); return; } player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) { gameOver = true; } }
-    function togglePause() { isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); }
-    function endGameAndGoToMenu() { gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
+    function togglePause(e) { if(isMobile && e) e.preventDefault(); isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); }
+    function endGameAndGoToMenu(e) { if(isMobile && e) e.preventDefault(); gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
-    // ALTERADO: Lógica de tiro agora é automática em dispositivos móveis
     function updatePlayer(now) {
         if (player.isHit && now - player.lastHitTime > 300) player.isHit = false;
         if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; }
@@ -383,18 +388,22 @@ window.onload = function() {
     // --- INICIALIZAÇÃO & LISTENERS ---
     loadData();
     loadAssets().then(() => { ui.loadingText.style.display = 'none'; ui.startBtn.disabled = false; }).catch(error => { console.error("Erro no carregamento de assets:", error); ui.loadingText.textContent = "Erro ao carregar!"; });
-    ui.startBtn.addEventListener('click', showStageSelect);
-    ui.upgradesBtn.addEventListener('click', showUpgradeStore);
-    ui.resetDataBtn.addEventListener('click', resetData);
-    ui.backToMenuFromStageSelectBtn.addEventListener('click', showMainMenu);
-    ui.backToMenuBtn.addEventListener('click', showMainMenu);
-    ui.confirmStageBtn.addEventListener('click', () => initGame((selectedStageIndex * 10) + 1));
-    ui.prevStageBtn.addEventListener('click', () => { if (selectedStageIndex > 0) { selectedStageIndex--; updateStageSelectorDisplay(); } });
-    ui.nextStageBtn.addEventListener('click', () => { if (selectedStageIndex < playerUpgrades.maxUnlockedStage - 1) { selectedStageIndex++; updateStageSelectorDisplay(); } });
-    ui.restartBtn.addEventListener('click', showStageSelect);
-    ui.gameOverToMenuBtn.addEventListener('click', showMainMenu);
-    ui.continueBtn.addEventListener('click', togglePause);
-    ui.pauseToMenuBtn.addEventListener('click', endGameAndGoToMenu);
+    
+    // ALTERADO: Usar 'touchstart' para botões em mobile para melhor responsividade
+    const clickEvent = isMobile ? 'touchstart' : 'click';
+    
+    ui.startBtn.addEventListener(clickEvent, showStageSelect);
+    ui.upgradesBtn.addEventListener(clickEvent, showUpgradeStore);
+    ui.resetDataBtn.addEventListener(clickEvent, resetData);
+    ui.backToMenuFromStageSelectBtn.addEventListener(clickEvent, showMainMenu);
+    ui.backToMenuBtn.addEventListener(clickEvent, showMainMenu);
+    ui.confirmStageBtn.addEventListener(clickEvent, () => initGame());
+    ui.prevStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); if (selectedStageIndex > 0) { selectedStageIndex--; updateStageSelectorDisplay(); } });
+    ui.nextStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); if (selectedStageIndex < playerUpgrades.maxUnlockedStage - 1) { selectedStageIndex++; updateStageSelectorDisplay(); } });
+    ui.restartBtn.addEventListener(clickEvent, showStageSelect);
+    ui.gameOverToMenuBtn.addEventListener(clickEvent, showMainMenu);
+    ui.continueBtn.addEventListener(clickEvent, togglePause);
+    ui.pauseToMenuBtn.addEventListener(clickEvent, endGameAndGoToMenu);
 
     window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; if(e.key === 'Escape' && gameStarted && !gameOver) togglePause(); });
     window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = false; });
@@ -402,15 +411,64 @@ window.onload = function() {
     document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
     document.addEventListener('mouseleave', () => mouse.down = false);
     
-    // ALTERADO: Botão de tiro é escondido e seus listeners removidos em dispositivos móveis
     if (isMobile) {
         ui.shootBtn.style.display = 'none';
 
         document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; }, { passive: false });
         document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
-        document.addEventListener('touchstart', (e) => { const touch = e.touches[0]; if (touch.clientX < window.innerWidth / 2) { e.preventDefault(); joystick.active = true; joystick.x = touch.clientX; joystick.y = touch.clientY; ui.joystickBase.style.left = `${joystick.x}px`; ui.joystickBase.style.top = `${joystick.y}px`; ui.joystickStick.style.left = `${joystick.x}px`; ui.joystickStick.style.top = `${joystick.y}px`; ui.joystickBase.classList.remove('hidden'); ui.joystickStick.classList.remove('hidden'); } }, { passive: false });
-        document.addEventListener('touchmove', (e) => { if (!joystick.active) return; e.preventDefault(); const touch = e.touches[0]; const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y; const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx); if (distance > joystick.maxRadius) { joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle); ui.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`; ui.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`; } else { joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius; ui.joystickStick.style.left = `${touch.clientX}px`; ui.joystickStick.style.top = `${touch.clientY}px`; } }, { passive: false });
-        document.addEventListener('touchend', (e) => { let wasJoystick = false; for(let i = 0; i < e.changedTouches.length; i++) { if(e.changedTouches[i].clientX < window.innerWidth / 2) wasJoystick = true; } if (joystick.active && wasJoystick) { joystick.active = false; joystick.dx = 0; joystick.dy = 0; ui.joystickBase.classList.add('hidden'); ui.joystickStick.classList.add('hidden'); } });
+        
+        // ALTERADO: Lógica do joystick otimizada com rastreamento de ID de toque
+        document.addEventListener('touchstart', (e) => {
+            if (joystickTouchId !== null) return;
+            const touch = e.changedTouches[0];
+            if (touch.clientX < window.innerWidth / 2) {
+                e.preventDefault();
+                joystick.active = true;
+                joystickTouchId = touch.identifier;
+                joystick.x = touch.clientX;
+                joystick.y = touch.clientY;
+                ui.joystickBase.style.left = `${joystick.x}px`; ui.joystickBase.style.top = `${joystick.y}px`;
+                ui.joystickStick.style.left = `${joystick.x}px`; ui.joystickStick.style.top = `${joystick.y}px`;
+                ui.joystickBase.classList.remove('hidden'); ui.joystickStick.classList.remove('hidden');
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!joystick.active) return;
+            e.preventDefault();
+            for (let i=0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === joystickTouchId) {
+                    const touch = e.changedTouches[i];
+                    const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx);
+                    if (distance > joystick.maxRadius) {
+                        joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle);
+                        ui.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`;
+                        ui.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`;
+                    } else {
+                        joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius;
+                        ui.joystickStick.style.left = `${touch.clientX}px`;
+                        ui.joystickStick.style.top = `${touch.clientY}px`;
+                    }
+                    break;
+                }
+            }
+        }, { passive: false });
+        
+        document.addEventListener('touchend', (e) => {
+            if (!joystick.active) return;
+            for (let i=0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === joystickTouchId) {
+                    joystick.active = false;
+                    joystickTouchId = null;
+                    joystick.dx = 0;
+                    joystick.dy = 0;
+                    ui.joystickBase.classList.add('hidden');
+                    ui.joystickStick.classList.add('hidden');
+                    break;
+                }
+            }
+        });
     }
 };
 </script>
