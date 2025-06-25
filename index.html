@@ -83,7 +83,6 @@ window.onload = function() {
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5, TOUCH_OFFSET_Y: 80, PLAYER_TOUCH_LERP_FACTOR: 0.25 };
     const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png', drone: 'drone.png', missel: 'missel.png' };
     const assets = {};
-    // --- NOVO: Caminhos e armazenamento para os áudios ---
     const AUDIO_PATHS = { theme: 'theme.mp3', shoot: 'tiro.mp3', menuSelect: 'selecionar.mp3' };
     const audioAssets = {};
     let isAudioContextUnlocked = false;
@@ -111,7 +110,6 @@ window.onload = function() {
     let isTouchMoving = false;
     
     // --- FUNÇÕES DE DADOS, UI E NAVEGAÇÃO ---
-    // MODIFICADO: Função de carregamento agora inclui áudios
     function loadAssets() {
         const imagePromises = Object.entries(ASSETS_PATHS).map(([name, src]) => {
             return new Promise((resolve, reject) => {
@@ -136,12 +134,10 @@ window.onload = function() {
         return Promise.all([...imagePromises, ...audioPromises]);
     }
     
-    // --- NOVO: Funções para controlar o áudio ---
     function playSound(name) {
         if (!isAudioContextUnlocked || !audioAssets[name]) return;
-        // Clonar o áudio permite que o som toque várias vezes sobreposto (ex: tiro rápido)
         const sound = audioAssets[name].cloneNode();
-        sound.play().catch(e => {}); // Ignora erros se o play for interrompido
+        sound.play().catch(e => {});
     }
 
     function playTheme() {
@@ -159,7 +155,6 @@ window.onload = function() {
     function unlockAudioContext() {
         if (isAudioContextUnlocked) return;
         isAudioContextUnlocked = true;
-        // Toca todos os sons uma vez com volume 0 para "preparar" no iOS
         Object.values(audioAssets).forEach(audio => {
             audio.volume = 0;
             audio.play().catch(e => {});
@@ -184,7 +179,7 @@ window.onload = function() {
 
     // --- LÓGICA PRINCIPAL DO JOGO ---
     function initGame(startingWave) {
-        stopTheme(); // MODIFICADO: Para a música tema
+        stopTheme();
         ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
@@ -259,14 +254,32 @@ window.onload = function() {
     }
     const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 3 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 2.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 2.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
     
+    // --- INÍCIO DA MODIFICAÇÃO DO CHEFE ---
     function spawnBoss() {
         const weaponSize = CONFIG.BOSS_WEAPON_SIZE;
-        const parts = [ { id: 'weapon1', x: 25, y: 70, width: weaponSize, height: weaponSize }, { id: 'weapon2', x: CONFIG.BOSS_WIDTH - weaponSize - 25, y: 70, width: weaponSize, height: weaponSize } ];
+        const parts = [
+            { id: 'weapon1', x: 25, y: 70, width: weaponSize, height: weaponSize },
+            { id: 'weapon2', x: CONFIG.BOSS_WIDTH - weaponSize - 25, y: 70, width: weaponSize, height: weaponSize }
+        ];
         boss = {
-            x: canvas.width / 2 - CONFIG.BOSS_WIDTH / 2, y: -CONFIG.BOSS_HEIGHT, width: CONFIG.BOSS_WIDTH, height: CONFIG.BOSS_HEIGHT,
-            health: 300 + (bossCount * 150), maxHealth: 300 + (bossCount * 150),
-            vy: 0.5, vx: 1.5, patrolRange: [20, canvas.width - CONFIG.BOSS_WIDTH - 20],
-            targetY: 50, phase: 1, shotAngle: 0, lastShotTime: Date.now(), lastSpiralShotTime: Date.now(),
+            x: canvas.width / 2 - CONFIG.BOSS_WIDTH / 2,
+            y: -CONFIG.BOSS_HEIGHT,
+            width: CONFIG.BOSS_WIDTH,
+            height: CONFIG.BOSS_HEIGHT,
+            // Vida do corpo principal triplicada
+            health: (300 + (bossCount * 150)) * 3,
+            maxHealth: (300 + (bossCount * 150)) * 3,
+            // Velocidades para patrulha
+            vx: 1.2,
+            vy: 0.7,
+            // Área de patrulha (horizontal e vertical)
+            patrolRangeX: [20, canvas.width - CONFIG.BOSS_WIDTH - 20],
+            // O chefe vai patrulhar entre 50px do topo e 60% da altura da tela.
+            patrolRangeY: [50, canvas.height * 0.6],
+            phase: 1,
+            shotAngle: 0,
+            lastShotTime: Date.now(),
+            lastSpiralShotTime: Date.now(),
             shotAngleIncrement: 0.1,
             spiralWaveCount: 0,
             SPIRAL_WAVE_LENGTH: 12,
@@ -274,23 +287,42 @@ window.onload = function() {
             parts: []
         };
         parts.forEach(p => {
-            boss.parts.push({ ...p, health: 100 + (bossCount * 50), maxHealth: 100 + (bossCount * 50), destroyed: false, lastShotTime: 0, shootCooldown: Math.max(600, 1000 - (bossCount * 80)) });
+            boss.parts.push({
+                ...p,
+                // Vida das partes triplicada
+                health: (100 + (bossCount * 50)) * 3,
+                maxHealth: (100 + (bossCount * 50)) * 3,
+                destroyed: false,
+                lastShotTime: 0,
+                shootCooldown: Math.max(600, 1000 - (bossCount * 80))
+            });
         });
     }
 
     function updateBoss(now) {
         if (!boss) return;
-        
-        if (boss.y < boss.targetY) {
-            boss.y += boss.vy;
-        } else {
-            boss.y = boss.targetY + Math.sin(now / 1500) * 20;
+
+        // --- LÓGICA DE MOVIMENTO ---
+        // Fase 1: Entrando na tela até atingir o topo da área de patrulha
+        if (boss.y < boss.patrolRangeY[0]) {
+            boss.y += 1; // Velocidade de entrada constante
+        }
+        // Fase 2: Patrulhando dentro da área definida
+        else {
             boss.x += boss.vx;
-            if (boss.x < boss.patrolRange[0] || boss.x > boss.patrolRange[1]) {
+            boss.y += boss.vy;
+
+            // Quica nas paredes horizontais (esquerda/direita) da patrulha
+            if (boss.x <= boss.patrolRangeX[0] || boss.x + boss.width >= canvas.width - boss.patrolRangeX[0]) {
                 boss.vx *= -1;
             }
+            // Quica nas paredes verticais (topo/base) da patrulha
+            if (boss.y <= boss.patrolRangeY[0] || boss.y + boss.height >= boss.patrolRangeY[1]) {
+                boss.vy *= -1;
+            }
         }
-        
+
+        // --- LÓGICA DE ATAQUE (não foi alterada) ---
         if (boss.phase === 1 && boss.parts.every(p => p.destroyed)) { boss.phase = 2; boss.lastShotTime = now; }
         if (boss.phase === 2 && boss.health < boss.maxHealth * 0.4) { boss.phase = 3; boss.lastShotTime = now; }
 
@@ -332,8 +364,8 @@ window.onload = function() {
             }
         }
     }
+    // --- FIM DA MODIFICAÇÃO DO CHEFE ---
 
-    // MODIFICADO: Adicionado som de tiro
     function fireProjectiles() {
         playSound('shoot');
         const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y, d = player.damage;
@@ -504,19 +536,16 @@ window.onload = function() {
     
     // --- INICIALIZAÇÃO & LISTENERS ---
     loadData();
-    // MODIFICADO: Atualizado texto de carregamento
     loadAssets().then(() => { ui.loadingText.textContent = 'Pronto! Clique para iniciar.'; ui.startBtn.disabled = false; }).catch(error => { console.error("Erro no carregamento de assets:", error); ui.loadingText.textContent = "Erro ao carregar!"; });
     
     const clickEvent = isMobile ? 'touchstart' : 'click';
     
-    // NOVO: Listener para desbloquear o áudio na primeira interação
     const firstInteractionHandler = () => {
         unlockAudioContext();
         window.removeEventListener(clickEvent, firstInteractionHandler);
     };
     window.addEventListener(clickEvent, firstInteractionHandler, { once: true });
     
-    // MODIFICADO: Adicionado som de clique nos botões
     ui.startBtn.addEventListener(clickEvent, showStageSelect);
     ui.upgradesBtn.addEventListener(clickEvent, showUpgradeStore);
     ui.resetDataBtn.addEventListener(clickEvent, resetData);
