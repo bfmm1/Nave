@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <!-- ALTERADO: Nome do jogo atualizado -->
     <title>Galaxy Guardians</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
@@ -11,7 +10,6 @@
         #game-container { position: relative; aspect-ratio: 9 / 14; height: 95vh; max-height: 95vh; width: calc(95vh * (9 / 14)); max-width: 100vw; background-color: #000; overflow: hidden; border: 2px solid #333; cursor: crosshair; }
         canvas { width: 100%; height: 100%; display: block; background-color: #000; }
         
-        /* ALTERADO: Estilo do menu principal para usar imagem de fundo e reposicionar os botões */
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; text-align: center; padding: 20px; z-index: 10; }
         #main-menu {
             background-image: url('menu.png');
@@ -27,7 +25,6 @@
         .overlay h1 { font-size: 2.5em; margin-bottom: 10px; }
         .overlay h2 { font-size: 1.8em; margin-bottom: 20px; }
         .overlay p { font-size: 1.2em; margin-bottom: 20px; text-shadow: 1px 1px 3px #000; }
-        /* ALTERADO: Tamanho dos botões reduzido */
         .button { padding: 10px 20px; font-size: 1.1em; background-color: #0af; border: none; color: #fff; cursor: pointer; border-radius: 5px; transition: background-color 0.3s; margin-top: 10px; width: 200px; }
         .button:hover { background-color: #08d; }
         .button.secondary { background-color: #555; }
@@ -36,7 +33,6 @@
         .button.danger:hover { background-color: #c00; }
         .button:disabled { background-color: #333; color: #888; cursor: not-allowed; }
         #main-menu-buttons, #stage-select-container { display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        /* ALTERADO: Centralização dos botões removida para o novo alinhamento */
         #main-menu-buttons { align-items: flex-start; }
         #stage-selector { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; }
         #stage-display { font-size: 1.4em; color: #ffc107; width: 250px; }
@@ -58,7 +54,6 @@
         #joystick-base { position: absolute; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border-radius: 50%; transform: translate(-50%, -50%); z-index: 5; }
         #joystick-stick { position: absolute; width: 60px; height: 60px; background-color: rgba(255, 255, 255, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 6; }
         .hidden { display: none !important; }
-        /* Adicionado para que os overlays que não são o menu principal voltem a ter fundo escuro */
         #stage-select-overlay, #upgrade-store-overlay, #pause-menu-overlay, #game-over-screen {
              background-color: rgba(0, 0, 0, 0.85);
              justify-content: center;
@@ -69,7 +64,6 @@
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
-        <!-- ALTERADO: HTML do menu principal simplificado (sem h1) -->
         <div id="main-menu" class="overlay"><p id="loading-text" style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando imagens...</p><p>Maior Pontuação: <span id="high-score-display">0</span></p><div id="main-menu-buttons"><button id="start-btn" class="button" disabled>Iniciar Jogo</button><button id="upgrades-btn" class="button secondary">Melhorias</button><button id="reset-data-btn" class="button danger">Resetar Progresso</button></div></div>
         <div id="stage-select-overlay" class="overlay hidden"><h2>Selecionar Fase</h2><div id="stage-select-container"><div id="stage-selector"><button id="prev-stage-btn" class="arrow-btn"><</button><span id="stage-display"></span><button id="next-stage-btn" class="arrow-btn">></button></div><button id="confirm-stage-btn" class="button">Iniciar</button><button id="back-to-menu-from-stage-select-btn" class="button secondary">Voltar</button></div></div>
         <div id="upgrade-store-overlay" class="overlay hidden"><h2>Melhorias</h2><p id="currency-display">Pontos: 0</p><div id="upgrade-store"></div><button id="back-to-menu-btn" class="button">Voltar</button></div>
@@ -90,8 +84,8 @@ window.onload = function() {
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5 };
-    // ALTERADO: Adicionado 'menu.png' para pré-carregamento
-    const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png' };
+    // ALTERADO: Adicionado 'drone.png' e 'missel.png' para pré-carregamento
+    const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png', drone: 'drone.png', missel: 'missel.png' };
     const assets = {};
     
     // --- ESTADO GLOBAL (PERSISTENTE) ---
@@ -132,8 +126,10 @@ window.onload = function() {
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
         player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 200 - (playerUpgrades.fireRate - 1) * 15, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 2 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
-        if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, side: 'left', lastShotTime: 0 });
-        if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, side: 'right', lastShotTime: 0 });
+        // ALTERADO: Adicionado width e height para o objeto drone
+        const droneSize = 20;
+        if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, width: droneSize, height: droneSize, side: 'left', lastShotTime: 0 });
+        if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, width: droneSize, height: droneSize, side: 'right', lastShotTime: 0 });
         startNextWave();
         requestAnimationFrame(gameLoop);
     }
@@ -217,7 +213,6 @@ window.onload = function() {
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Desenha o fundo com scroll contínuo e corrigido
         if (assets.background && assets.background.complete) {
             const bg = assets.background;
             const scale = canvas.width / bg.width;
@@ -235,8 +230,15 @@ window.onload = function() {
         
         enemies.forEach(e => { const hp = e.health / e.maxHealth; ctx.fillStyle = '#f00'; ctx.fillRect(e.x, e.y - 10, e.width, 5); ctx.fillStyle = '#0f0'; ctx.fillRect(e.x, e.y - 10, e.width * hp, 5); setShadow(); ctx.drawImage(assets.enemy1, e.x, e.y, e.width, e.height); resetShadow(); });
         ctx.fillStyle = '#f90'; enemyProjectiles.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
-        drones.forEach(d => { ctx.fillStyle = '#ccc'; ctx.beginPath(); ctx.arc(d.x, d.y, 8, 0, Math.PI*2); ctx.fill(); });
-        ctx.fillStyle = '#0f0'; homingMissiles.forEach(m => { ctx.beginPath(); ctx.arc(m.x, m.y, 4, 0, Math.PI*2); ctx.fill(); });
+        
+        // ALTERADO: Desenha a imagem do drone ao invés de um círculo, com sombra
+        setShadow();
+        drones.forEach(d => { ctx.drawImage(assets.drone, d.x - d.width / 2, d.y - d.height / 2, d.width, d.height); });
+        resetShadow();
+        
+        // ALTERADO: Desenha a imagem do míssil ao invés de um círculo
+        homingMissiles.forEach(m => { ctx.drawImage(assets.missel, m.x - m.w / 2, m.y - m.h / 2, m.w, m.h); });
+
         powerups.forEach(p => { const isHealth = p.type === 'health'; ctx.fillStyle = isHealth ? '#ff4d4d' : '#FFD700'; ctx.beginPath(); ctx.arc(p.x + p.width / 2, p.y + p.height / 2, p.width / 2, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "#000"; ctx.font = `bold 24px Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(isHealth ? '♥' : 'S', p.x + p.width / 2, p.y + p.height / 2 + 2); });
         if (bossActive && boss) drawBoss();
         ctx.font = 'bold 14px Arial'; damageNumbers.forEach(dn => { ctx.globalAlpha = dn.life / 60; ctx.fillStyle = dn.color; ctx.fillText(dn.text, dn.x, dn.y); }); ctx.globalAlpha = 1.0;
