@@ -62,7 +62,7 @@
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
-        <div id="main-menu" class="overlay"><p id="loading-text" style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando imagens...</p><p>Maior Pontuação: <span id="high-score-display">0</span></p><div id="main-menu-buttons"><button id="start-btn" class="button" disabled>Iniciar Jogo</button><button id="upgrades-btn" class="button secondary">Melhorias</button><button id="reset-data-btn" class="button danger">Resetar Progresso</button></div></div>
+        <div id="main-menu" class="overlay"><p id="loading-text" style="color:#ffc107; font-size:1em; margin-bottom:10px;">Carregando...</p><p>Maior Pontuação: <span id="high-score-display">0</span></p><div id="main-menu-buttons"><button id="start-btn" class="button" disabled>Iniciar Jogo</button><button id="upgrades-btn" class="button secondary">Melhorias</button><button id="reset-data-btn" class="button danger">Resetar Progresso</button></div></div>
         <div id="stage-select-overlay" class="overlay hidden"><h2>Selecionar Fase</h2><div id="stage-select-container"><div id="stage-selector"><button id="prev-stage-btn" class="arrow-btn"><</button><span id="stage-display"></span><button id="next-stage-btn" class="arrow-btn">></button></div><button id="confirm-stage-btn" class="button">Iniciar</button><button id="back-to-menu-from-stage-select-btn" class="button secondary">Voltar</button></div></div>
         <div id="upgrade-store-overlay" class="overlay hidden"><h2>Melhorias</h2><p id="currency-display">Pontos: 0</p><div id="upgrade-store"></div><button id="back-to-menu-btn" class="button">Voltar</button></div>
         <div id="pause-menu-overlay" class="overlay hidden"><h2>Pausado</h2><div id="pause-menu-buttons"><button id="continue-btn" class="button">Continuar</button><button id="pause-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
@@ -83,7 +83,11 @@ window.onload = function() {
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5, TOUCH_OFFSET_Y: 80, PLAYER_TOUCH_LERP_FACTOR: 0.25 };
     const ASSETS_PATHS = { player: 'navep1.png', enemy1: 'inimigo1.png', boss: 'boss.png', bossWeapon: 'armaboss.png', background: 'fundo.png', menu: 'menu.png', drone: 'drone.png', missel: 'missel.png' };
     const assets = {};
-    
+    // --- NOVO: Caminhos e armazenamento para os áudios ---
+    const AUDIO_PATHS = { theme: 'theme.mp3', shoot: 'tiro.mp3', menuSelect: 'selecionar.mp3' };
+    const audioAssets = {};
+    let isAudioContextUnlocked = false;
+
     // --- ESTADO GLOBAL (PERSISTENTE) ---
     let playerCurrency = 0, playerUpgrades = {};
     const upgradeConfig = {
@@ -107,22 +111,80 @@ window.onload = function() {
     let isTouchMoving = false;
     
     // --- FUNÇÕES DE DADOS, UI E NAVEGAÇÃO ---
-    function loadAssets() { const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => { return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; }); }); return Promise.all(promises); }
+    // MODIFICADO: Função de carregamento agora inclui áudios
+    function loadAssets() {
+        const imagePromises = Object.entries(ASSETS_PATHS).map(([name, src]) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                assets[name] = img;
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error(`Falha ao carregar imagem ${src}`));
+                img.src = src;
+            });
+        });
+
+        const audioPromises = Object.entries(AUDIO_PATHS).map(([name, src]) => {
+            return new Promise((resolve, reject) => {
+                const audio = new Audio();
+                audioAssets[name] = audio;
+                audio.addEventListener('canplaythrough', () => resolve(audio), { once: true });
+                audio.onerror = () => reject(new Error(`Falha ao carregar áudio ${src}`));
+                audio.src = src;
+            });
+        });
+
+        return Promise.all([...imagePromises, ...audioPromises]);
+    }
+    
+    // --- NOVO: Funções para controlar o áudio ---
+    function playSound(name) {
+        if (!isAudioContextUnlocked || !audioAssets[name]) return;
+        // Clonar o áudio permite que o som toque várias vezes sobreposto (ex: tiro rápido)
+        const sound = audioAssets[name].cloneNode();
+        sound.play().catch(e => {}); // Ignora erros se o play for interrompido
+    }
+
+    function playTheme() {
+        if (!isAudioContextUnlocked || !audioAssets.theme) return;
+        audioAssets.theme.loop = true;
+        audioAssets.theme.play().catch(e => {});
+    }
+
+    function stopTheme() {
+        if (!audioAssets.theme) return;
+        audioAssets.theme.pause();
+        audioAssets.theme.currentTime = 0;
+    }
+
+    function unlockAudioContext() {
+        if (isAudioContextUnlocked) return;
+        isAudioContextUnlocked = true;
+        // Toca todos os sons uma vez com volume 0 para "preparar" no iOS
+        Object.values(audioAssets).forEach(audio => {
+            audio.volume = 0;
+            audio.play().catch(e => {});
+            audio.pause();
+            audio.volume = 1;
+        });
+        playTheme();
+    }
+    
     function loadData() { playerCurrency = parseInt(localStorage.getItem('playerCurrency') || '0', 10); const savedUpgrades = JSON.parse(localStorage.getItem('playerUpgrades') || '{}'); playerUpgrades.maxUnlockedStage = parseInt(savedUpgrades.maxUnlockedStage || '1', 10); for (const key in upgradeConfig) { playerUpgrades[key] = savedUpgrades[key] || (key === 'shield' || key === 'drones' ? 0 : 1); } ui.highScoreDisplay.textContent = (parseInt(localStorage.getItem('aeroFighterHighScore') || '0')).toLocaleString('pt-BR'); }
     function saveData() { localStorage.setItem('playerCurrency', playerCurrency); localStorage.setItem('playerUpgrades', JSON.stringify(playerUpgrades)); const highScore = parseInt(localStorage.getItem('aeroFighterHighScore') || '0'); if (score > highScore) localStorage.setItem('aeroFighterHighScore', score); }
-    function resetData(e) { if(isMobile) e.preventDefault(); if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
+    function resetData(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); if (confirm("Tem certeza que deseja apagar todo o seu progresso? Isso não pode ser desfeito.")) { localStorage.clear(); location.reload(); } }
     
-    function showMainMenu(e) { if(isMobile && e) e.preventDefault(); ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
-    function showUpgradeStore(e) { if(isMobile) e.preventDefault(); populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
-    function showStageSelect(e) { if(isMobile) e.preventDefault(); selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
+    function showMainMenu(e) { if(isMobile && e) e.preventDefault(); playTheme(); ui.mainMenu.classList.remove('hidden'); ui.upgradeStoreOverlay.classList.add('hidden'); ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); }
+    function showUpgradeStore(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); populateUpgradeStore(); ui.mainMenu.classList.add('hidden'); ui.upgradeStoreOverlay.classList.remove('hidden'); }
+    function showStageSelect(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); selectedStageIndex = 0; updateStageSelectorDisplay(); ui.mainMenu.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.stageSelectOverlay.classList.remove('hidden'); }
     function populateUpgradeStore() { const clickEvent = isMobile ? 'touchstart' : 'click'; ui.currencyDisplay.textContent = `Pontos: ${playerCurrency.toLocaleString('pt-BR')}`; ui.upgradeStore.innerHTML = ''; for (const key in upgradeConfig) { const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level -1)); const itemDiv = document.createElement('div'); itemDiv.className = 'upgrade-item'; let levelText = `Nível: ${level}`; if (level >= config.maxLevel) levelText = 'Nível: MÁXIMO'; itemDiv.innerHTML = `<h3>${config.name}</h3><p>${levelText}</p><p>Custo: ${level < config.maxLevel ? cost.toLocaleString('pt-BR') : '---'}</p><button class="button buy-btn" data-key="${key}" ${level >= config.maxLevel || playerCurrency < cost ? 'disabled' : ''}>Comprar</button>`; ui.upgradeStore.appendChild(itemDiv); } document.querySelectorAll('.buy-btn').forEach(btn => btn.addEventListener(clickEvent, buyUpgrade)); }
-    function buyUpgrade(e) { if(isMobile) e.preventDefault(); const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level-1)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
+    function buyUpgrade(e) { if(isMobile) e.preventDefault(); playSound('menuSelect'); const key = e.target.getAttribute('data-key'); const config = upgradeConfig[key]; const level = playerUpgrades[key]; const cost = Math.floor(config.baseCost * Math.pow(1.8, level-1)); if (level < config.maxLevel && playerCurrency >= cost) { playerCurrency -= cost; playerUpgrades[key]++; saveData(); populateUpgradeStore(); } }
     function updateStageSelectorDisplay() { const stageNum = selectedStageIndex + 1; const startWave = selectedStageIndex * 10 + 1; const endWave = startWave + 9; ui.stageDisplay.textContent = `Fase ${stageNum} (Ondas ${startWave}-${endWave})`; ui.prevStageBtn.disabled = selectedStageIndex === 0; ui.nextStageBtn.disabled = selectedStageIndex >= playerUpgrades.maxUnlockedStage - 1; }
     function updateUIDisplay() { ui.scoreDisplay.textContent = `Pontos: ${score.toLocaleString('pt-BR')}`; ui.waveDisplay.textContent = `Onda: ${wave}`; ui.healthText.textContent = `${Math.ceil(player.health)}/${player.maxHealth}`; ui.specialText.textContent = player.specialAmmo; if (isMobile) ui.specialCountBtn.textContent = player.specialAmmo; }
     function spawnDamageNumber(amount, x, y, color = '#fff') { damageNumbers.push({ text: Math.round(amount), x: x + 20, y: y, life: 60, vy: -0.5, color }); }
 
     // --- LÓGICA PRINCIPAL DO JOGO ---
     function initGame(startingWave) {
+        stopTheme(); // MODIFICADO: Para a música tema
         ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
@@ -136,12 +198,12 @@ window.onload = function() {
         startNextWave();
         requestAnimationFrame(gameLoop);
     }
-    function handleConfirmStage(e) { if (isMobile) e.preventDefault(); const startingWave = (selectedStageIndex * 10) + 1; initGame(startingWave); }
+    function handleConfirmStage(e) { if (isMobile) e.preventDefault(); playSound('menuSelect'); const startingWave = (selectedStageIndex * 10) + 1; initGame(startingWave); }
 
     function startNextWave() { wave++; if (player.hasShield) player.shieldActive = true; if (wave > 0 && wave % 10 === 0) { bossActive = true; spawnBoss(); } else { spawnEnemies(); } }
     function handlePlayerHit() { if (player.shieldActive) { player.shieldActive = false; player.isHit = true; player.lastHitTime = Date.now(); return; } player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) { gameOver = true; } }
-    function togglePause(e) { if(isMobile && e) e.preventDefault(); isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); }
-    function endGameAndGoToMenu(e) { if(isMobile && e) e.preventDefault(); gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
+    function togglePause(e) { if(isMobile && e) e.preventDefault(); playSound('menuSelect'); isPaused = !isPaused; ui.pauseMenuOverlay.classList.toggle('hidden', !isPaused); }
+    function endGameAndGoToMenu(e) { if(isMobile && e) e.preventDefault(); playSound('menuSelect'); gameStarted = false; gameOver = false; isPaused = false; ui.pauseMenuOverlay.classList.add('hidden'); saveData(); showMainMenu(); }
     
     // --- LÓGICA DE OBJETOS DO JOGO ---
     function updatePlayer(now) {
@@ -271,7 +333,9 @@ window.onload = function() {
         }
     }
 
+    // MODIFICADO: Adicionado som de tiro
     function fireProjectiles() {
+        playSound('shoot');
         const s = player.projectileSpeed, x = player.x + player.width / 2, y = player.y, d = player.damage;
         const p = { s, damage: d, health: 1 };
         switch (player.shotCount) {
@@ -287,7 +351,6 @@ window.onload = function() {
     function spawnPowerup(x, y) { const dropPowerup = (type, px, py) => powerups.push({ x: px, y: py, width: 30, height: 30, type, speed: 2 }); let dropped = 0; const dropX = x - 15; if (Math.random() <= 0.05) { dropPowerup('shotSpeed', dropX + (dropped * 35), y); dropped++; } if (Math.random() <= 0.05) { dropPowerup('health', dropX + (dropped * 35), y); } }
     function applyPowerup(type) { if (type === 'shotSpeed') player.projectileSpeed = Math.min(14, player.projectileSpeed + 0.5); if (type === 'health') player.health = Math.min(player.maxHealth, player.health + 1); }
 
-    // ALTERADO: Lógica de colisão do jogador agora usa hitboxes menores e invisíveis.
     function checkCollisions() {
         for (let i = projectiles.length - 1; i >= 0; i--) {
             const p = projectiles[i]; let hit = false;
@@ -305,7 +368,6 @@ window.onload = function() {
         for (let i = powerups.length - 1; i >= 0; i--) { if (isColliding(player, powerups[i])) { applyPowerup(powerups[i].type); powerups.splice(i, 1); } }
         
         if (!player.isHit) {
-            // Checa colisão com projéteis inimigos (hitbox 70%)
             const playerHitboxProj = { width: player.width * 0.7, height: player.height * 0.7 };
             playerHitboxProj.x = player.x + (player.width - playerHitboxProj.width) / 2;
             playerHitboxProj.y = player.y + (player.height - playerHitboxProj.height) / 2;
@@ -318,8 +380,6 @@ window.onload = function() {
                 }
             }
             if (player.isHit) return;
-
-            // Checa colisão com naves inimigas (hitbox 80%)
             const playerHitboxEnemy = { width: player.width * 0.8, height: player.height * 0.8 };
             playerHitboxEnemy.x = player.x + (player.width - playerHitboxEnemy.width) / 2;
             playerHitboxEnemy.y = player.y + (player.height - playerHitboxEnemy.height) / 2;
@@ -331,9 +391,7 @@ window.onload = function() {
             for (let i = physicalObjects.length - 1; i >= 0; i--) {
                 if (isColliding(physicalObjects[i], playerHitboxEnemy)) {
                     handlePlayerHit();
-                    if (physicalObjects[i].maxHealth) { // Se for um inimigo/boss, não o projétil
-                         const index = enemies.indexOf(physicalObjects[i]); if (index > -1) enemies.splice(index, 1);
-                    }
+                    if (physicalObjects[i].maxHealth) { const index = enemies.indexOf(physicalObjects[i]); if (index > -1) enemies.splice(index, 1); }
                     if (gameOver) return;
                     break;
                 }
@@ -446,24 +504,33 @@ window.onload = function() {
     
     // --- INICIALIZAÇÃO & LISTENERS ---
     loadData();
-    loadAssets().then(() => { ui.loadingText.style.display = 'none'; ui.startBtn.disabled = false; }).catch(error => { console.error("Erro no carregamento de assets:", error); ui.loadingText.textContent = "Erro ao carregar!"; });
+    // MODIFICADO: Atualizado texto de carregamento
+    loadAssets().then(() => { ui.loadingText.textContent = 'Pronto! Clique para iniciar.'; ui.startBtn.disabled = false; }).catch(error => { console.error("Erro no carregamento de assets:", error); ui.loadingText.textContent = "Erro ao carregar!"; });
     
     const clickEvent = isMobile ? 'touchstart' : 'click';
     
+    // NOVO: Listener para desbloquear o áudio na primeira interação
+    const firstInteractionHandler = () => {
+        unlockAudioContext();
+        window.removeEventListener(clickEvent, firstInteractionHandler);
+    };
+    window.addEventListener(clickEvent, firstInteractionHandler, { once: true });
+    
+    // MODIFICADO: Adicionado som de clique nos botões
     ui.startBtn.addEventListener(clickEvent, showStageSelect);
     ui.upgradesBtn.addEventListener(clickEvent, showUpgradeStore);
     ui.resetDataBtn.addEventListener(clickEvent, resetData);
-    ui.backToMenuFromStageSelectBtn.addEventListener(clickEvent, showMainMenu);
-    ui.backToMenuBtn.addEventListener(clickEvent, showMainMenu);
+    ui.backToMenuFromStageSelectBtn.addEventListener(clickEvent, (e) => { if (isMobile) e.preventDefault(); playSound('menuSelect'); showMainMenu(); });
+    ui.backToMenuBtn.addEventListener(clickEvent, (e) => { if (isMobile) e.preventDefault(); playSound('menuSelect'); showMainMenu(); });
     ui.confirmStageBtn.addEventListener(clickEvent, handleConfirmStage);
-    ui.prevStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); if (selectedStageIndex > 0) { selectedStageIndex--; updateStageSelectorDisplay(); } });
-    ui.nextStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); if (selectedStageIndex < playerUpgrades.maxUnlockedStage - 1) { selectedStageIndex++; updateStageSelectorDisplay(); } });
-    ui.restartBtn.addEventListener(clickEvent, showStageSelect);
-    ui.gameOverToMenuBtn.addEventListener(clickEvent, showMainMenu);
+    ui.prevStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); playSound('menuSelect'); if (selectedStageIndex > 0) { selectedStageIndex--; updateStageSelectorDisplay(); } });
+    ui.nextStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); playSound('menuSelect'); if (selectedStageIndex < playerUpgrades.maxUnlockedStage - 1) { selectedStageIndex++; updateStageSelectorDisplay(); } });
+    ui.restartBtn.addEventListener(clickEvent, (e) => { if (isMobile) e.preventDefault(); playSound('menuSelect'); showStageSelect(); });
+    ui.gameOverToMenuBtn.addEventListener(clickEvent, (e) => { if (isMobile) e.preventDefault(); playSound('menuSelect'); showMainMenu(); });
     ui.continueBtn.addEventListener(clickEvent, togglePause);
     ui.pauseToMenuBtn.addEventListener(clickEvent, endGameAndGoToMenu);
 
-    window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; if(e.key === 'Escape' && gameStarted && !gameOver) togglePause(); });
+    window.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = true; if(e.key === 'Escape' && gameStarted && !gameOver) { playSound('menuSelect'); togglePause(); } });
     window.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if (keys.hasOwnProperty(k)) keys[k] = false; });
     document.addEventListener('mousedown', (e) => { if (e.target === canvas && e.button === 0) mouse.down = true; });
     document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
@@ -471,20 +538,16 @@ window.onload = function() {
     
     if (isMobile) {
         const specialBtn = document.getElementById('special-btn');
-
         function setTouchTarget(touch) {
             if (!player) return;
             const rect = canvas.getBoundingClientRect();
             touchTargetX = (touch.clientX - rect.left) / rect.width * canvas.width;
             touchTargetY = (touch.clientY - rect.top) / rect.height * canvas.height - CONFIG.TOUCH_OFFSET_Y;
         }
-
         specialBtn.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = true; }, { passive: false });
         specialBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = false; });
-        
-        // ALTERADO: Listener de toque agora só previne o default se o jogo estiver rodando.
         gameContainer.addEventListener('touchstart', (e) => {
-            if (!gameStarted || isPaused) return; // Permite scroll em menus
+            if (!gameStarted || isPaused) return;
             e.preventDefault();
             if (controllingTouchId === null) {
                 const touch = e.changedTouches[0];
@@ -493,9 +556,8 @@ window.onload = function() {
                 setTouchTarget(touch);
             }
         }, { passive: false });
-
         gameContainer.addEventListener('touchmove', (e) => {
-            if (!gameStarted || isPaused) return; // Permite scroll em menus
+            if (!gameStarted || isPaused) return;
             e.preventDefault();
             if (controllingTouchId !== null) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
@@ -506,7 +568,6 @@ window.onload = function() {
                 }
             }
         }, { passive: false });
-        
         const touchEndHandler = (e) => {
             if (controllingTouchId !== null) {
                 for (let i = 0; i < e.changedTouches.length; i++) {
@@ -518,7 +579,6 @@ window.onload = function() {
                 }
             }
         };
-        
         gameContainer.addEventListener('touchend', touchEndHandler);
         gameContainer.addEventListener('touchcancel', touchEndHandler);
     }
