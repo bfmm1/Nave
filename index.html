@@ -51,8 +51,7 @@
         .action-btn-text { font-size: 0.8em; }
         .action-btn-count { font-size: 1.2em; }
         #special-btn { background-color: rgba(80, 80, 255, 0.5); }
-        #joystick-base { position: absolute; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.15); border-radius: 50%; transform: translate(-50%, -50%); z-index: 5; }
-        #joystick-stick { position: absolute; width: 60px; height: 60px; background-color: rgba(255, 255, 255, 0.3); border-radius: 50%; transform: translate(-50%, -50%); z-index: 6; }
+        /* ALTERADO: CSS do Joystick removido */
         .hidden { display: none !important; }
         #stage-select-overlay, #upgrade-store-overlay, #pause-menu-overlay, #game-over-screen {
              background-color: rgba(0, 0, 0, 0.85);
@@ -70,7 +69,8 @@
         <div id="pause-menu-overlay" class="overlay hidden"><h2>Pausado</h2><div id="pause-menu-buttons"><button id="continue-btn" class="button">Continuar</button><button id="pause-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
         <div id="game-over-screen" class="overlay hidden"><h1>Fim de Jogo</h1><p>Sua pontuação: <span id="final-score">0</span></p><div id="game-over-buttons"><button id="restart-btn" class="button">Jogar Novamente</button><button id="game-over-to-menu-btn" class="button secondary">Voltar ao Menu</button></div></div>
         <div id="game-ui" class="hidden"><div id="ui-top-row"><span id="score">Pontos: 0</span><span id="wave">Onda: 1</span></div><div id="ui-bottom-row"><div id="player-health-display"><span>♥</span><span id="health-text">10/10</span></div><div id="player-special-display"><span>💣</span><span id="special-text">1</span></div></div></div>
-        <div id="virtual-controls"><div id="joystick-base" class="hidden"></div><div id="joystick-stick" class="hidden"></div><div id="action-buttons" class="hidden"><button id="special-btn" class="action-btn"><span class="action-btn-text">Especial</span><span id="special-count-btn" class="action-btn-count">1</span></button><button id="shoot-btn" class="action-btn">Atirar</button></div></div>
+        <!-- ALTERADO: HTML do Joystick removido -->
+        <div id="virtual-controls"><div id="action-buttons" class="hidden"><button id="special-btn" class="action-btn"><span class="action-btn-text">Especial</span><span id="special-count-btn" class="action-btn-count">1</span></button></div></div>
     </div>
 <script>
 window.onload = function() {
@@ -78,7 +78,9 @@ window.onload = function() {
     // --- SETUP, CONFIGURAÇÕES E ASSETS ---
     // ----------------------------------------------------------------------------------
     const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
-    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), joystickBase: document.querySelector('#virtual-controls #joystick-base'), joystickStick: document.querySelector('#virtual-controls #joystick-stick'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text'), shootBtn: document.getElementById('shoot-btn') };
+    const gameContainer = document.getElementById('game-container');
+    // ALTERADO: Referências ao Joystick removidas do objeto UI
+    const ui = { mainMenu: document.getElementById('main-menu'), stageSelectOverlay: document.getElementById('stage-select-overlay'), prevStageBtn: document.getElementById('prev-stage-btn'), nextStageBtn: document.getElementById('next-stage-btn'), stageDisplay: document.getElementById('stage-display'), confirmStageBtn: document.getElementById('confirm-stage-btn'), backToMenuFromStageSelectBtn: document.getElementById('back-to-menu-from-stage-select-btn'), upgradeStoreOverlay: document.getElementById('upgrade-store-overlay'), upgradeStore: document.getElementById('upgrade-store'), gameOverScreen: document.getElementById('game-over-screen'), pauseMenuOverlay: document.getElementById('pause-menu-overlay'), continueBtn: document.getElementById('continue-btn'), pauseToMenuBtn: document.getElementById('pause-to-menu-btn'), gameUI: document.getElementById('game-ui'), actionButtons: document.getElementById('action-buttons'), startBtn: document.getElementById('start-btn'), upgradesBtn: document.getElementById('upgrades-btn'), resetDataBtn: document.getElementById('reset-data-btn'), backToMenuBtn: document.getElementById('back-to-menu-btn'), restartBtn: document.getElementById('restart-btn'), gameOverToMenuBtn: document.getElementById('game-over-to-menu-btn'), scoreDisplay: document.getElementById('score'), waveDisplay: document.getElementById('wave'), healthText: document.getElementById('health-text'), specialText: document.getElementById('special-text'), specialCountBtn: document.getElementById('special-count-btn'), currencyDisplay: document.getElementById('currency-display'), highScoreDisplay: document.getElementById('high-score-display'), finalScoreDisplay: document.getElementById('final-score'), loadingText: document.getElementById('loading-text') };
     canvas.width = 450; canvas.height = 700;
     const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
     const CONFIG = { PLAYER_SIZE: 45, ENEMY_SIZE: 50, BOSS_WIDTH: 220, BOSS_HEIGHT: 150, BOSS_WEAPON_SIZE: 45, BACKGROUND_SCROLL_SPEED: 1.5 };
@@ -101,8 +103,9 @@ window.onload = function() {
     let gameStarted, gameOver, isPaused, score, wave, player, projectiles, enemies, enemyProjectiles, powerups, boss, damageNumbers, bossCount, drones, homingMissiles, selectedStageIndex;
     let backgroundY = 0;
     let bossActive = false;
-    const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false }, joystick = { active: false, x: 0, y: 0, dx: 0, dy: 0, maxRadius: 50 };
-    let joystickTouchId = null;
+    const keys = { w: false, a: false, s: false, d: false, j: false, f: false }, mouse = { down: false };
+    // ALTERADO: Variável do joystick trocada pela de controle de toque direto
+    let controllingTouchId = null;
     
     // --- FUNÇÕES DE DADOS, UI E NAVEGAÇÃO ---
     function loadAssets() { const promises = Object.entries(ASSETS_PATHS).map(([name, src]) => { return new Promise((resolve, reject) => { const img = new Image(); assets[name] = img; img.onload = () => resolve(img); img.onerror = () => reject(new Error(`Falha ao carregar ${src}`)); img.src = src; }); }); return Promise.all(promises); }
@@ -120,29 +123,19 @@ window.onload = function() {
     function spawnDamageNumber(amount, x, y, color = '#fff') { damageNumbers.push({ text: Math.round(amount), x: x + 20, y: y, life: 60, vy: -0.5, color }); }
 
     // --- LÓGICA PRINCIPAL DO JOGO ---
-    // ALTERADO: A função initGame foi simplificada para aceitar apenas um número.
     function initGame(startingWave) {
-        ui.stageSelectOverlay.classList.add('hidden');
-        ui.gameOverScreen.classList.add('hidden');
-        ui.gameUI.classList.remove('hidden');
-        if (isMobile) ui.actionButtons.classList.remove('hidden');
-
+        ui.stageSelectOverlay.classList.add('hidden'); ui.gameOverScreen.classList.add('hidden'); ui.gameUI.classList.remove('hidden'); if (isMobile) ui.actionButtons.classList.remove('hidden');
         gameStarted = true; gameOver = false; isPaused = false; score = 0; wave = startingWave - 1; bossCount = Math.floor(wave / 10); bossActive = false;
         projectiles = []; enemies = []; enemyProjectiles = []; powerups = []; damageNumbers = []; boss = null; drones = []; homingMissiles = [];
         backgroundY = 0;
-        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: isMobile ? 4.8 : 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
+        player = { x: canvas.width / 2 - CONFIG.PLAYER_SIZE / 2, y: canvas.height - 100, width: CONFIG.PLAYER_SIZE, height: CONFIG.PLAYER_SIZE, speed: 4, maxHealth: 10 + (playerUpgrades.maxHealth - 1) * 2, health: 10 + (playerUpgrades.maxHealth - 1) * 2, damage: 1 + (playerUpgrades.damage - 1), fireRate: 280 - (playerUpgrades.fireRate - 1) * 20, specialAmmo: 1 + (playerUpgrades.specialCount - 1), hasShield: playerUpgrades.shield > 0, shieldActive: playerUpgrades.shield > 0, isHit: false, lastHitTime: 0, lastShotTime: 0, lastSpecialTime: -15000, shotCount: 1 + (playerUpgrades.shotCount - 1), projectileSpeed: 8 };
         const droneSize = 20;
         if (playerUpgrades.drones >= 1) drones.push({ x: player.x - 40, y: player.y, width: droneSize, height: droneSize, side: 'left', lastShotTime: 0 });
         if (playerUpgrades.drones >= 2) drones.push({ x: player.x + player.width + 10, y: player.y, width: droneSize, height: droneSize, side: 'right', lastShotTime: 0 });
         startNextWave();
         requestAnimationFrame(gameLoop);
     }
-    // NOVO: Função handler dedicada para o botão de confirmar fase.
-    function handleConfirmStage(e) {
-        if (isMobile) e.preventDefault();
-        const startingWave = (selectedStageIndex * 10) + 1;
-        initGame(startingWave);
-    }
+    function handleConfirmStage(e) { if (isMobile) e.preventDefault(); const startingWave = (selectedStageIndex * 10) + 1; initGame(startingWave); }
 
     function startNextWave() { wave++; if (player.hasShield) player.shieldActive = true; if (wave > 0 && wave % 10 === 0) { bossActive = true; spawnBoss(); } else { spawnEnemies(); } }
     function handlePlayerHit() { if (player.shieldActive) { player.shieldActive = false; player.isHit = true; player.lastHitTime = Date.now(); return; } player.health--; player.isHit = true; player.lastHitTime = Date.now(); if (player.health <= 0) { gameOver = true; } }
@@ -152,9 +145,15 @@ window.onload = function() {
     // --- LÓGICA DE OBJETOS DO JOGO ---
     function updatePlayer(now) {
         if (player.isHit && now - player.lastHitTime > 300) player.isHit = false;
-        if (isMobile && joystick.active) { player.x += joystick.dx * player.speed; player.y += joystick.dy * player.speed; } else { if (keys.w) player.y -= player.speed; if (keys.s) player.y += player.speed; if (keys.a) player.x -= player.speed; if (keys.d) player.x += player.speed; }
-        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-        player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        // ALTERADO: Movimento no celular é agora controlado pelos eventos de toque direto.
+        if (!isMobile) {
+            if (keys.w) player.y -= player.speed;
+            if (keys.s) player.y += player.speed;
+            if (keys.a) player.x -= player.speed;
+            if (keys.d) player.x += player.speed;
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        }
         
         const shootTrigger = isMobile || keys.j || mouse.down;
         if (shootTrigger && now - player.lastShotTime > player.fireRate) {
@@ -169,14 +168,25 @@ window.onload = function() {
         }
     }
     
+    // ALTERADO: Dificuldade inicial rebalanceada
     function spawnEnemies() {
         const enemyCount = 3 + Math.floor(wave * 1.5);
         for (let i = 0; i < enemyCount; i++) {
-            const health = 3 + Math.floor(wave * 0.8);
+            const health = 2 + Math.floor(wave * 0.7); // Vida escala mais lentamente no início
             const patterns = ['single', 'spread'];
             if (wave > 5) patterns.push('homing');
             const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-            enemies.push({ x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE), y: -50 - (i * 60), width: CONFIG.ENEMY_SIZE, height: CONFIG.ENEMY_SIZE, health: health, maxHealth: health, vy: 1 + Math.random() * 0.5 + (wave * 0.05), vx: (Math.random() - 0.5) * 2, shootPattern: pattern, shootCooldown: Math.max(500, 2500 - wave * 50), lastShotTime: Date.now() });
+            enemies.push({ 
+                x: Math.random() * (canvas.width - CONFIG.ENEMY_SIZE), 
+                y: -50 - (i * 60), 
+                width: CONFIG.ENEMY_SIZE, height: CONFIG.ENEMY_SIZE, 
+                health: health, maxHealth: health, 
+                vy: 1 + Math.random() * 0.5 + (wave > 2 ? (wave * 0.05) : 0), // Velocidade só aumenta após a onda 2
+                vx: (Math.random() - 0.5) * 2, 
+                shootPattern: pattern, 
+                shootCooldown: Math.max(500, 2800 - (wave > 3 ? (wave * 50) : 0)), // Cadência só aumenta após a onda 3
+                lastShotTime: Date.now()
+            });
         }
     }
     const enemyShootingPatterns = { single: e => enemyProjectiles.push({ x: e.x + e.width / 2 - 2.5, y: e.y + e.height, width: 5, height: 15, vy: 3 }), spread: e => { enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: -0.5, vy: 2.75 }); enemyProjectiles.push({ x: e.x + e.width / 2 - 4, y: e.y + e.height, width: 8, height: 8, vx: 0.5, vy: 2.75 }); }, homing: e => { const angle = Math.atan2(player.y - e.y, player.x - e.x); enemyProjectiles.push({ x: e.x + e.width / 2, y: e.y + e.height, width: 10, height: 10, vx: Math.cos(angle) * 2, vy: Math.sin(angle) * 2 }); } };
@@ -403,7 +413,6 @@ window.onload = function() {
     ui.resetDataBtn.addEventListener(clickEvent, resetData);
     ui.backToMenuFromStageSelectBtn.addEventListener(clickEvent, showMainMenu);
     ui.backToMenuBtn.addEventListener(clickEvent, showMainMenu);
-    // ALTERADO: O listener agora chama a nova função handler.
     ui.confirmStageBtn.addEventListener(clickEvent, handleConfirmStage);
     ui.prevStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); if (selectedStageIndex > 0) { selectedStageIndex--; updateStageSelectorDisplay(); } });
     ui.nextStageBtn.addEventListener(clickEvent, (e) => { if(isMobile) e.preventDefault(); if (selectedStageIndex < playerUpgrades.maxUnlockedStage - 1) { selectedStageIndex++; updateStageSelectorDisplay(); } });
@@ -418,63 +427,62 @@ window.onload = function() {
     document.addEventListener('mouseup', (e) => { if (e.button === 0) mouse.down = false; });
     document.addEventListener('mouseleave', () => mouse.down = false);
     
+    // ALTERADO: Lógica de controle de toque direto
     if (isMobile) {
-        ui.shootBtn.style.display = 'none';
+        let controllingTouchId = null;
+        const specialBtn = document.getElementById('special-btn');
 
-        document.getElementById('special-btn').addEventListener('touchstart', (e) => { e.preventDefault(); keys.f = true; }, { passive: false });
-        document.getElementById('special-btn').addEventListener('touchend', (e) => { e.preventDefault(); keys.f = false; });
+        function updatePlayerPosition(touch) {
+            if (!player) return;
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = touch.clientX - rect.left;
+            const canvasY = touch.clientY - rect.top;
+            
+            player.x = canvasX - player.width / 2;
+            player.y = canvasY - player.height / 2;
+            
+            // Garante que a nave não saia da tela
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+        }
+
+        specialBtn.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = true; }, { passive: false });
+        specialBtn.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); keys.f = false; });
         
-        document.addEventListener('touchstart', (e) => {
-            if (joystickTouchId !== null) return;
-            const touch = e.changedTouches[0];
-            if (touch.clientX < window.innerWidth / 2) {
-                e.preventDefault();
-                joystick.active = true;
-                joystickTouchId = touch.identifier;
-                joystick.x = touch.clientX;
-                joystick.y = touch.clientY;
-                ui.joystickBase.style.left = `${joystick.x}px`; ui.joystickBase.style.top = `${joystick.y}px`;
-                ui.joystickStick.style.left = `${joystick.x}px`; ui.joystickStick.style.top = `${joystick.y}px`;
-                ui.joystickBase.classList.remove('hidden'); ui.joystickStick.classList.remove('hidden');
-            }
-        }, { passive: false });
-
-        document.addEventListener('touchmove', (e) => {
-            if (!joystick.active) return;
+        gameContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            for (let i=0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === joystickTouchId) {
-                    const touch = e.changedTouches[i];
-                    const dx = touch.clientX - joystick.x, dy = touch.clientY - joystick.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy), angle = Math.atan2(dy, dx);
-                    if (distance > joystick.maxRadius) {
-                        joystick.dx = Math.cos(angle); joystick.dy = Math.sin(angle);
-                        ui.joystickStick.style.left = `${joystick.x + joystick.dx * joystick.maxRadius}px`;
-                        ui.joystickStick.style.top = `${joystick.y + joystick.dy * joystick.maxRadius}px`;
-                    } else {
-                        joystick.dx = dx / joystick.maxRadius; joystick.dy = dy / joystick.maxRadius;
-                        ui.joystickStick.style.left = `${touch.clientX}px`;
-                        ui.joystickStick.style.top = `${touch.clientY}px`;
+            if (controllingTouchId === null) {
+                const touch = e.changedTouches[0];
+                controllingTouchId = touch.identifier;
+                updatePlayerPosition(touch);
+            }
+        }, { passive: false });
+
+        gameContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (controllingTouchId !== null) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === controllingTouchId) {
+                        updatePlayerPosition(e.changedTouches[i]);
+                        break;
                     }
-                    break;
                 }
             }
         }, { passive: false });
         
-        document.addEventListener('touchend', (e) => {
-            if (!joystick.active) return;
-            for (let i=0; i < e.changedTouches.length; i++) {
-                if (e.changedTouches[i].identifier === joystickTouchId) {
-                    joystick.active = false;
-                    joystickTouchId = null;
-                    joystick.dx = 0;
-                    joystick.dy = 0;
-                    ui.joystickBase.classList.add('hidden');
-                    ui.joystickStick.classList.add('hidden');
-                    break;
+        const touchEndHandler = (e) => {
+            if (controllingTouchId !== null) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === controllingTouchId) {
+                        controllingTouchId = null;
+                        break;
+                    }
                 }
             }
-        });
+        };
+        
+        gameContainer.addEventListener('touchend', touchEndHandler);
+        gameContainer.addEventListener('touchcancel', touchEndHandler);
     }
 };
 </script>
